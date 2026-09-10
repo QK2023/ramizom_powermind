@@ -1,0 +1,26 @@
+# Ramizom PowerMind user workspace data (never commit private notes)
+powermind.workspace.json
+notes/
+*.powermind.json
+
+# Dependencies, generated output, and test artifacts
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.qa-*/
+*.log
+*.tmp
+
+# Local editor and operating-system metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local-only configuration and secrets
+.env
+.env.*
+!.env.example

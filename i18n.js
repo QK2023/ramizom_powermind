@@ -1,0 +1,167 @@
+window.PM_I18N = {
+  en: {
+    newNote: 'New note', search: 'Search notes', allNotes: 'All notes', favorites: 'Favorites', trash: 'Trash',
+    workspace: 'WORKSPACE', folders: 'FOLDERS', notes: 'Notes', recent: 'RECENT', saved: 'Saved', saving: 'Saving…',
+    import: 'Import', export: 'Export', addCard: 'Card', addIdea: 'Idea', ink: 'Ink', select: 'Select', pan: 'Pan',
+    untitled: 'Untitled', emptyNote: 'Start writing, or type / for blocks', folderName: 'Folder name', workspaceName: 'Workspace name',
+    rename: 'Rename', duplicate: 'Duplicate', favorite: 'Favorite', move: 'Move to folder', delete: 'Move to trash', restore: 'Restore', permanentlyDelete: 'Delete permanently',
+    text: 'Text', heading: 'Heading', todo: 'To-do', bullets: 'Bullet list', quote: 'Quote', divider: 'Divider',
+    clearInk: 'Clear ink', appearance: 'Appearance', language: 'Language', theme: 'Theme', system: 'System', light: 'Light', dark: 'Dark', accentColor:'Theme color', accentRed:'Ruby red', accentGreen:'Forest green', accentYellow:'Sunflower yellow',  pen: 'Pen', highlighter: 'Marker', eraser: 'Eraser',
+    storageReady: 'Persistent local storage', storageFallback: 'Browser storage', imported: 'Backup imported', exported: 'Backup exported',
+    formula:'Formula', formulaHint:'Build a formula with the keyboard or type LaTeX.', documentTarget:'Document', mindmapTarget:'Mind map', insert:'Insert', addChild:'Add child', setRoot:'Set as center', collapse:'Collapse branch', expand:'Expand branch', autoLayout:'Auto layout', code:'Code', link:'Link', textColor:'Text color',
+    emptyTitle: 'Nothing here yet', emptyBody: 'Create a note to begin.', cancel: 'Cancel', create: 'Create', close: 'Close'
+  },
+  zh: {
+    newNote: '新建笔记', search: '搜索笔记', allNotes: '全部笔记', favorites: '收藏', trash: '回收站',
+    workspace: '工作区', folders: '文件夹', notes: '笔记', recent: '最近使用', saved: '已保存', saving: '正在保存…',
+    import: '导入', export: '导出', addCard: '卡片', addIdea: '想法', ink: '手写', select: '选择', pan: '平移',
+    untitled: '无标题', emptyNote: '开始输入，或键入 / 插入内容块', folderName: '文件夹名称', workspaceName: '工作区名称',
+    rename: '重命名', duplicate: '创建副本', favorite: '收藏', move: '移动到文件夹', delete: '移至回收站', restore: '恢复', permanentlyDelete: '永久删除',
+    text: '文本', heading: '标题', todo: '待办事项', bullets: '项目符号列表', quote: '引用', divider: '分隔线',
+    clearInk: '清除手写', appearance: '外观', language: '语言', theme: '主题', system: '跟随系统', light: '浅色', dark: '深色', accentColor:'主题色', accentRed:'宝石红', accentGreen:'森林绿', accentYellow:'向日葵黄',  pen: '钢笔', highlighter: '荧光笔', eraser: '橡皮擦',
+    storageReady: '持久化本地存储', storageFallback: '浏览器存储', imported: '备份已导入', exported: '备份已导出',
+    formula:'公式', formulaHint:'使用屏幕键盘构建公式，或直接输入 LaTeX。', documentTarget:'文档', mindmapTarget:'思维导图', insert:'插入', addChild:'添加子节点', setRoot:'设为中心节点', collapse:'折叠分支', expand:'展开分支', autoLayout:'自动布局', code:'代码', link:'链接', textColor:'文字颜色',
+    emptyTitle: '这里还没有内容', emptyBody: '新建一篇笔记开始使用。', cancel: '取消', create: '创建', close: '关闭'
+  },
+  es: {
+    newNote:'Nueva nota',search:'Buscar notas',allNotes:'Todas las notas',favorites:'Favoritos',trash:'Papelera',workspace:'ESPACIO',folders:'CARPETAS',notes:'Notas',recent:'RECIENTES',saved:'Guardado',saving:'Guardando…',import:'Importar',export:'Exportar',addCard:'Tarjeta',addIdea:'Idea',ink:'Tinta',select:'Seleccionar',pan:'Mover',untitled:'Sin título',emptyNote:'Escribe o usa / para insertar bloques',folderName:'Nombre de carpeta',workspaceName:'Nombre del espacio',rename:'Renombrar',duplicate:'Duplicar',favorite:'Favorito',move:'Mover a carpeta',delete:'Mover a papelera',restore:'Restaurar',permanentlyDelete:'Eliminar definitivamente',text:'Texto',heading:'Título',todo:'Tarea',bullets:'Lista',quote:'Cita',divider:'Separador',clearInk:'Borrar tinta',appearance:'Apariencia',language:'Idioma',theme:'Tema',system:'Sistema',light:'Claro',dark:'Oscuro',accentColor:'Color del tema',accentRed:'Rojo rubí',accentGreen:'Verde bosque',accentYellow:'Amarillo girasol', pen:'Lápiz',highlighter:'Marcador',eraser:'Borrador',formula:'Fórmula',formulaHint:'Crea una fórmula con el teclado o escribe LaTeX.',documentTarget:'Documento',mindmapTarget:'Mapa mental',insert:'Insertar',addChild:'Añadir hijo',setRoot:'Definir como centro',collapse:'Contraer rama',expand:'Expandir rama',code:'Código',link:'Enlace',textColor:'Color de texto',storageReady:'Almacenamiento local persistente',storageFallback:'Almacenamiento del navegador',imported:'Copia importada',exported:'Copia exportada',emptyTitle:'Nada por aquí',emptyBody:'Crea una nota para comenzar.',cancel:'Cancelar',create:'Crear',close:'Cerrar'
+  },
+  fr: {
+    newNote:'Nouvelle note',search:'Rechercher',allNotes:'Toutes les notes',favorites:'Favoris',trash:'Corbeille',workspace:'ESPACE',folders:'DOSSIERS',notes:'Notes',recent:'RÉCENT',saved:'Enregistré',saving:'Enregistrement…',import:'Importer',export:'Exporter',addCard:'Carte',addIdea:'Idée',ink:'Encre',select:'Sélection',pan:'Déplacer',untitled:'Sans titre',emptyNote:'Écrivez ou utilisez / pour insérer un bloc',folderName:'Nom du dossier',workspaceName:'Nom de l’espace',rename:'Renommer',duplicate:'Dupliquer',favorite:'Favori',move:'Déplacer',delete:'Mettre à la corbeille',restore:'Restaurer',permanentlyDelete:'Supprimer définitivement',text:'Texte',heading:'Titre',todo:'Tâche',bullets:'Liste',quote:'Citation',divider:'Séparateur',clearInk:'Effacer l’encre',appearance:'Apparence',language:'Langue',theme:'Thème',system:'Système',light:'Clair',dark:'Sombre', pen:'Stylo',highlighter:'Surligneur',eraser:'Gomme',formula:'Formule',formulaHint:'Composez une formule avec le clavier ou saisissez du LaTeX.',documentTarget:'Document',mindmapTarget:'Carte mentale',insert:'Insérer',addChild:'Ajouter un enfant',setRoot:'Définir comme centre',collapse:'Réduire la branche',expand:'Développer la branche',code:'Code',link:'Lien',textColor:'Couleur du texte',storageReady:'Stockage local persistant',storageFallback:'Stockage du navigateur',imported:'Sauvegarde importée',exported:'Sauvegarde exportée',emptyTitle:'Rien ici',emptyBody:'Créez une note pour commencer.',cancel:'Annuler',create:'Créer',close:'Fermer'
+  },
+  ja: {
+    newNote:'新しいノート',search:'ノートを検索',allNotes:'すべてのノート',favorites:'お気に入り',trash:'ごみ箱',workspace:'ワークスペース',folders:'フォルダー',notes:'ノート',recent:'最近',saved:'保存済み',saving:'保存中…',import:'インポート',export:'エクスポート',addCard:'カード',addIdea:'アイデア',ink:'手書き',select:'選択',pan:'移動',untitled:'無題',emptyNote:'入力するか、/ でブロックを挿入',folderName:'フォルダー名',workspaceName:'ワークスペース名',rename:'名前を変更',duplicate:'複製',favorite:'お気に入り',move:'フォルダーへ移動',delete:'ごみ箱へ移動',restore:'復元',permanentlyDelete:'完全に削除',text:'テキスト',heading:'見出し',todo:'タスク',bullets:'箇条書き',quote:'引用',divider:'区切り線',clearInk:'手書きを消去',appearance:'外観',language:'言語',theme:'テーマ',system:'システム',light:'ライト',dark:'ダーク', pen:'ペン',highlighter:'蛍光ペン',eraser:'消しゴム',formula:'数式',formulaHint:'画面キーボードまたは LaTeX 入力で数式を作成します。',documentTarget:'ドキュメント',mindmapTarget:'マインドマップ',insert:'挿入',addChild:'子ノードを追加',setRoot:'中心に設定',collapse:'分岐を折りたたむ',expand:'分岐を展開',code:'コード',link:'リンク',textColor:'文字色',storageReady:'永続ローカルストレージ',storageFallback:'ブラウザストレージ',imported:'バックアップを読み込みました',exported:'バックアップを書き出しました',emptyTitle:'まだ何もありません',emptyBody:'新しいノートを作成してください。',cancel:'キャンセル',create:'作成',close:'閉じる'
+  }
+};
+Object.assign(window.PM_I18N.fr,{accentColor:'Couleur du thème',accentRed:'Rouge rubis',accentGreen:'Vert forêt',accentYellow:'Jaune tournesol'});
+Object.assign(window.PM_I18N.ja,{accentColor:'テーマカラー',accentRed:'ルビーレッド',accentGreen:'フォレストグリーン',accentYellow:'サンフラワーイエロー'});
+Object.assign(window.PM_I18N.en,{addBlock:'Add block',backlinks:'Backlinks',dataRecovered:'Recovered the last safe copy'});
+Object.assign(window.PM_I18N.zh,{addBlock:'添加内容块',backlinks:'反向链接',dataRecovered:'已恢复最近的安全副本'});
+Object.assign(window.PM_I18N.es,{addBlock:'Añadir bloque',backlinks:'Enlaces entrantes',dataRecovered:'Se restauró la última copia segura'});
+Object.assign(window.PM_I18N.fr,{addBlock:'Ajouter un bloc',backlinks:'Liens entrants',dataRecovered:'Dernière copie sûre restaurée'});
+Object.assign(window.PM_I18N.ja,{addBlock:'ブロックを追加',backlinks:'バックリンク',dataRecovered:'直近の安全なコピーを復元しました'});
+Object.assign(window.PM_I18N.en,{addSibling:'Add sibling'});Object.assign(window.PM_I18N.zh,{addSibling:'添加同级节点'});Object.assign(window.PM_I18N.es,{addSibling:'Añadir nodo hermano'});Object.assign(window.PM_I18N.fr,{addSibling:'Ajouter au même niveau'});Object.assign(window.PM_I18N.ja,{addSibling:'同階層ノードを追加'});
+Object.assign(window.PM_I18N.en,{bodyFontSize:'Body text size',image:'Image',heading1:'Large heading',heading3:'Small heading'});
+Object.assign(window.PM_I18N.en,{newMindMap:'New mind map'});
+Object.assign(window.PM_I18N.en,{exportNote:'Export note',exportWorkspace:'Export workspace'});
+Object.assign(window.PM_I18N.en,{print:'Print',exportPdf:'Export as PDF',pdfHint:'Choose “Save as PDF” in the print dialog.',dateCreated:'Date created',titleSort:'Title',manualSort:'Manual order',data:'Data',exportAll:'Export all'});
+Object.assign(window.PM_I18N.zh,{bodyFontSize:'正文字号',image:'图片',heading1:'大标题',heading3:'小标题'});
+Object.assign(window.PM_I18N.zh,{newMindMap:'新建思维导图'});
+Object.assign(window.PM_I18N.zh,{exportNote:'导出笔记',exportWorkspace:'导出工作区'});
+Object.assign(window.PM_I18N.zh,{print:'打印',exportPdf:'导出为 PDF',pdfHint:'请在打印窗口中选择“另存为 PDF”。',dateCreated:'创建日期',titleSort:'标题',manualSort:'手动排序',data:'数据',exportAll:'导出全部'});
+Object.assign(window.PM_I18N.es,{newMindMap:'Nuevo mapa mental'});Object.assign(window.PM_I18N.fr,{newMindMap:'Nouvelle carte mentale'});Object.assign(window.PM_I18N.ja,{newMindMap:'新しいマインドマップ'});
+Object.assign(window.PM_I18N.es,{bodyFontSize:'Tamaño del texto',image:'Imagen',heading1:'Título grande',heading3:'Título pequeño'});
+Object.assign(window.PM_I18N.fr,{bodyFontSize:'Taille du texte',image:'Image',heading1:'Grand titre',heading3:'Petit titre'});
+Object.assign(window.PM_I18N.ja,{bodyFontSize:'本文の文字サイズ',image:'画像',heading1:'大見出し',heading3:'小見出し'});
+Object.assign(window.PM_I18N.en,{blocks:'blocks'});Object.assign(window.PM_I18N.zh,{blocks:'个内容块'});Object.assign(window.PM_I18N.es,{blocks:'bloques'});Object.assign(window.PM_I18N.fr,{blocks:'blocs'});Object.assign(window.PM_I18N.ja,{blocks:'ブロック'});
+Object.assign(window.PM_I18N.en,{fit:'Fit'});Object.assign(window.PM_I18N.zh,{fit:'适应'});Object.assign(window.PM_I18N.es,{fit:'Ajustar'});Object.assign(window.PM_I18N.fr,{fit:'Ajuster'});Object.assign(window.PM_I18N.ja,{fit:'全体表示'});
+Object.assign(window.PM_I18N.es,{autoLayout:'Diseño automático'});Object.assign(window.PM_I18N.fr,{autoLayout:'Disposition automatique'});Object.assign(window.PM_I18N.ja,{autoLayout:'自動レイアウト'});
+Object.assign(window.PM_I18N.en,{accentOrange:'Amber orange',accentTeal:'Lagoon teal',accentBlue:'Fluent blue',accentPurple:'Iris purple'});
+Object.assign(window.PM_I18N.zh,{accentOrange:'琥珀橙',accentTeal:'湖水青',accentBlue:'流畅蓝',accentPurple:'鸢尾紫'});
+Object.assign(window.PM_I18N.es,{accentOrange:'Naranja ámbar',accentTeal:'Verde azulado',accentBlue:'Azul Fluent',accentPurple:'Morado iris'});
+Object.assign(window.PM_I18N.fr,{accentOrange:'Orange ambré',accentTeal:'Bleu sarcelle',accentBlue:'Bleu Fluent',accentPurple:'Violet iris'});
+Object.assign(window.PM_I18N.ja,{accentOrange:'アンバーオレンジ',accentTeal:'ラグーンティール',accentBlue:'フルーエントブルー',accentPurple:'アイリスパープル'});
+
+window.PM_I18N.de={...window.PM_I18N.en,
+  newNote:'Neue Notiz',search:'Notizen durchsuchen',allNotes:'Alle Notizen',favorites:'Favoriten',trash:'Papierkorb',workspace:'ARBEITSBEREICH',folders:'ORDNER',notes:'Notizen',recent:'ZULETZT',saved:'Gespeichert',saving:'Wird gespeichert…',
+  import:'Importieren',export:'Exportieren',addCard:'Karte',addIdea:'Idee',ink:'Freihand',select:'Auswählen',pan:'Verschieben',untitled:'Ohne Titel',emptyNote:'Schreiben oder / für Blöcke eingeben',folderName:'Ordnername',workspaceName:'Name des Arbeitsbereichs',
+  rename:'Umbenennen',duplicate:'Duplizieren',favorite:'Favorisieren',move:'In Ordner verschieben',delete:'In Papierkorb verschieben',restore:'Wiederherstellen',permanentlyDelete:'Endgültig löschen',text:'Text',heading:'Überschrift',todo:'Aufgabe',bullets:'Aufzählung',quote:'Zitat',divider:'Trennlinie',
+  clearInk:'Freihand löschen',appearance:'Darstellung',language:'Sprache',theme:'Design',system:'System',light:'Hell',dark:'Dunkel',accentColor:'Designfarbe',accentRed:'Rubinrot',accentOrange:'Bernsteinorange',accentYellow:'Sonnenblumengelb',accentGreen:'Waldgrün',accentTeal:'Lagunen-Türkis',accentBlue:'Fluent-Blau',accentPurple:'Irisviolett', pen:'Stift',highlighter:'Textmarker',eraser:'Radierer',
+  storageReady:'Dauerhafter lokaler Speicher',storageFallback:'Browserspeicher',imported:'Sicherung importiert',exported:'Sicherung exportiert',formula:'Formel',formulaHint:'Formel mit der Bildschirmtastatur erstellen oder LaTeX eingeben.',documentTarget:'Dokument',mindmapTarget:'Mindmap',insert:'Einfügen',addChild:'Untergeordneten Knoten hinzufügen',addSibling:'Knoten auf gleicher Ebene hinzufügen',setRoot:'Als Zentrum festlegen',collapse:'Zweig einklappen',expand:'Zweig ausklappen',autoLayout:'Automatisch anordnen',code:'Code',link:'Link',textColor:'Textfarbe',
+  emptyTitle:'Noch keine Inhalte',emptyBody:'Erstellen Sie eine Notiz, um zu beginnen.',cancel:'Abbrechen',create:'Erstellen',close:'Schließen',addBlock:'Block hinzufügen',backlinks:'Rückverweise',dataRecovered:'Letzte sichere Kopie wiederhergestellt',blocks:'Blöcke',fit:'Einpassen'
+};
+window.PM_I18N.pt={...window.PM_I18N.en,
+  newNote:'Nova nota',search:'Pesquisar notas',allNotes:'Todas as notas',favorites:'Favoritos',trash:'Lixeira',workspace:'ESPAÇO DE TRABALHO',folders:'PASTAS',notes:'Notas',recent:'RECENTES',saved:'Salvo',saving:'Salvando…',
+  import:'Importar',export:'Exportar',addCard:'Cartão',addIdea:'Ideia',ink:'Tinta',select:'Selecionar',pan:'Mover',untitled:'Sem título',emptyNote:'Comece a escrever ou digite / para blocos',folderName:'Nome da pasta',workspaceName:'Nome do espaço',rename:'Renomear',duplicate:'Duplicar',favorite:'Favoritar',move:'Mover para pasta',delete:'Mover para a lixeira',restore:'Restaurar',permanentlyDelete:'Excluir permanentemente',text:'Texto',heading:'Título',todo:'Tarefa',bullets:'Lista com marcadores',quote:'Citação',divider:'Divisor',
+  clearInk:'Limpar tinta',appearance:'Aparência',language:'Idioma',theme:'Tema',system:'Sistema',light:'Claro',dark:'Escuro',accentColor:'Cor do tema',accentRed:'Vermelho rubi',accentOrange:'Laranja âmbar',accentYellow:'Amarelo girassol',accentGreen:'Verde floresta',accentTeal:'Verde lagoa',accentBlue:'Azul Fluent',accentPurple:'Roxo íris', pen:'Caneta',highlighter:'Marca-texto',eraser:'Borracha',
+  storageReady:'Armazenamento local persistente',storageFallback:'Armazenamento do navegador',imported:'Backup importado',exported:'Backup exportado',formula:'Fórmula',formulaHint:'Monte uma fórmula com o teclado virtual ou digite LaTeX.',documentTarget:'Documento',mindmapTarget:'Mapa mental',insert:'Inserir',addChild:'Adicionar filho',addSibling:'Adicionar no mesmo nível',setRoot:'Definir como centro',collapse:'Recolher ramo',expand:'Expandir ramo',autoLayout:'Layout automático',code:'Código',link:'Link',textColor:'Cor do texto',
+  emptyTitle:'Ainda não há conteúdo',emptyBody:'Crie uma nota para começar.',cancel:'Cancelar',create:'Criar',close:'Fechar',addBlock:'Adicionar bloco',backlinks:'Links de retorno',dataRecovered:'Última cópia segura restaurada',blocks:'blocos',fit:'Ajustar'
+};
+window.PM_I18N.ko={...window.PM_I18N.en,
+  newNote:'새 노트',search:'노트 검색',allNotes:'모든 노트',favorites:'즐겨찾기',trash:'휴지통',workspace:'작업 공간',folders:'폴더',notes:'노트',recent:'최근',saved:'저장됨',saving:'저장 중…',
+  import:'가져오기',export:'내보내기',addCard:'카드',addIdea:'아이디어',ink:'잉크',select:'선택',pan:'이동',untitled:'제목 없음',emptyNote:'입력을 시작하거나 /로 블록 삽입',folderName:'폴더 이름',workspaceName:'작업 공간 이름',rename:'이름 바꾸기',duplicate:'복제',favorite:'즐겨찾기',move:'폴더로 이동',delete:'휴지통으로 이동',restore:'복원',permanentlyDelete:'영구 삭제',text:'텍스트',heading:'제목',todo:'할 일',bullets:'글머리 기호',quote:'인용',divider:'구분선',
+  clearInk:'잉크 지우기',appearance:'모양',language:'언어',theme:'테마',system:'시스템',light:'밝게',dark:'어둡게',accentColor:'테마 색',accentRed:'루비 레드',accentOrange:'앰버 오렌지',accentYellow:'해바라기 옐로',accentGreen:'포레스트 그린',accentTeal:'라군 틸',accentBlue:'Fluent 블루',accentPurple:'아이리스 퍼플', pen:'펜',highlighter:'형광펜',eraser:'지우개',
+  storageReady:'영구 로컬 저장소',storageFallback:'브라우저 저장소',imported:'백업을 가져왔습니다',exported:'백업을 내보냈습니다',formula:'수식',formulaHint:'화면 키보드로 수식을 만들거나 LaTeX를 입력하세요.',documentTarget:'문서',mindmapTarget:'마인드맵',insert:'삽입',addChild:'하위 노드 추가',addSibling:'같은 수준 노드 추가',setRoot:'중심으로 설정',collapse:'분기 접기',expand:'분기 펼치기',autoLayout:'자동 레이아웃',code:'코드',link:'링크',textColor:'글자색',
+  emptyTitle:'아직 내용이 없습니다',emptyBody:'새 노트를 만들어 시작하세요.',cancel:'취소',create:'만들기',close:'닫기',addBlock:'블록 추가',backlinks:'백링크',dataRecovered:'최근 안전 복사본을 복원했습니다',blocks:'개 블록',fit:'맞춤'
+};
+Object.assign(window.PM_I18N.de,{bodyFontSize:'Textgröße',image:'Bild',heading1:'Große Überschrift',heading3:'Kleine Überschrift'});
+Object.assign(window.PM_I18N.pt,{bodyFontSize:'Tamanho do texto',image:'Imagem',heading1:'Título grande',heading3:'Título pequeno'});
+Object.assign(window.PM_I18N.ko,{bodyFontSize:'본문 글자 크기',image:'이미지',heading1:'큰 제목',heading3:'작은 제목'});
+Object.assign(window.PM_I18N.de,{newMindMap:'Neue Mindmap'});Object.assign(window.PM_I18N.pt,{newMindMap:'Novo mapa mental'});Object.assign(window.PM_I18N.ko,{newMindMap:'새 마인드맵'});
+Object.assign(window.PM_I18N.en,{readingMode:'Reading mode',editingMode:'Editing mode'});
+Object.assign(window.PM_I18N.zh,{readingMode:'阅读模式',editingMode:'编辑模式'});
+Object.assign(window.PM_I18N.es,{readingMode:'Modo de lectura',editingMode:'Modo de edición'});
+Object.assign(window.PM_I18N.fr,{readingMode:'Mode lecture',editingMode:'Mode édition'});
+Object.assign(window.PM_I18N.ja,{readingMode:'閲覧モード',editingMode:'編集モード'});
+Object.assign(window.PM_I18N.de,{readingMode:'Lesemodus',editingMode:'Bearbeitungsmodus'});
+Object.assign(window.PM_I18N.pt,{readingMode:'Modo de leitura',editingMode:'Modo de edição'});
+Object.assign(window.PM_I18N.ko,{readingMode:'읽기 모드',editingMode:'편집 모드'});
+Object.assign(window.PM_I18N.en,{settings:'Settings'});
+Object.assign(window.PM_I18N.zh,{settings:'设置'});
+Object.assign(window.PM_I18N.es,{settings:'Configuración'});
+Object.assign(window.PM_I18N.fr,{settings:'Paramètres'});
+Object.assign(window.PM_I18N.ja,{settings:'設定'});
+Object.assign(window.PM_I18N.de,{settings:'Einstellungen'});
+Object.assign(window.PM_I18N.pt,{settings:'Configurações'});
+Object.assign(window.PM_I18N.ko,{settings:'설정'});
+Object.assign(window.PM_I18N.en,{systemFolder:'System folder',chooseFolder:'Choose folder',changeFolder:'Change folder',folderRequired:'Choose a folder for your notes',folderConnected:'Folder connected',directFolderUnsupported:'Direct folder access requires Edge or Chrome',openExistingFolder:'This folder already contains PowerMind notes. Open it and replace the notes currently in memory?',saveFailed:'Save failed'});
+Object.assign(window.PM_I18N.zh,{systemFolder:'系统文件夹',chooseFolder:'选择文件夹',changeFolder:'更改文件夹',folderRequired:'请选择用于保存笔记的文件夹',folderConnected:'文件夹已连接',directFolderUnsupported:'直接访问文件夹需要使用 Edge 或 Chrome',openExistingFolder:'此文件夹已包含 PowerMind 笔记。是否打开并替换当前内存中的笔记？',saveFailed:'保存失败'});
+Object.assign(window.PM_I18N.es,{systemFolder:'Carpeta del sistema',chooseFolder:'Elegir carpeta',changeFolder:'Cambiar carpeta',folderRequired:'Elige una carpeta para tus notas',folderConnected:'Carpeta conectada',directFolderUnsupported:'El acceso directo requiere Edge o Chrome',openExistingFolder:'Esta carpeta ya contiene notas de PowerMind. ¿Abrirla?',saveFailed:'Error al guardar'});
+Object.assign(window.PM_I18N.fr,{systemFolder:'Dossier système',chooseFolder:'Choisir un dossier',changeFolder:'Changer de dossier',folderRequired:'Choisissez un dossier pour vos notes',folderConnected:'Dossier connecté',directFolderUnsupported:'L’accès direct nécessite Edge ou Chrome',openExistingFolder:'Ce dossier contient déjà des notes PowerMind. L’ouvrir ?',saveFailed:'Échec de l’enregistrement'});
+Object.assign(window.PM_I18N.ja,{systemFolder:'システムフォルダー',chooseFolder:'フォルダーを選択',changeFolder:'フォルダーを変更',folderRequired:'ノートの保存先を選択してください',folderConnected:'フォルダーに接続済み',directFolderUnsupported:'直接アクセスには Edge または Chrome が必要です',openExistingFolder:'このフォルダーには PowerMind ノートがあります。開きますか？',saveFailed:'保存できませんでした'});
+Object.assign(window.PM_I18N.de,{systemFolder:'Systemordner',chooseFolder:'Ordner auswählen',changeFolder:'Ordner wechseln',folderRequired:'Wählen Sie einen Ordner für Ihre Notizen',folderConnected:'Ordner verbunden',directFolderUnsupported:'Direkter Ordnerzugriff erfordert Edge oder Chrome',openExistingFolder:'Dieser Ordner enthält PowerMind-Notizen. Öffnen?',saveFailed:'Speichern fehlgeschlagen'});
+Object.assign(window.PM_I18N.pt,{systemFolder:'Pasta do sistema',chooseFolder:'Escolher pasta',changeFolder:'Alterar pasta',folderRequired:'Escolha uma pasta para suas notas',folderConnected:'Pasta conectada',directFolderUnsupported:'O acesso direto requer Edge ou Chrome',openExistingFolder:'Esta pasta contém notas do PowerMind. Abrir?',saveFailed:'Falha ao salvar'});
+Object.assign(window.PM_I18N.ko,{systemFolder:'시스템 폴더',chooseFolder:'폴더 선택',changeFolder:'폴더 변경',folderRequired:'노트를 저장할 폴더를 선택하세요',folderConnected:'폴더 연결됨',directFolderUnsupported:'직접 폴더 접근에는 Edge 또는 Chrome이 필요합니다',openExistingFolder:'이 폴더에 PowerMind 노트가 있습니다. 여시겠습니까?',saveFailed:'저장 실패'});
+Object.assign(window.PM_I18N.en,{folderGateBody:'Choose a system folder before you begin. Your notes stay visible in File Explorer, and the folder can be reopened or moved like ordinary files.',closeFolder:'Close folder'});
+Object.assign(window.PM_I18N.zh,{folderGateBody:'开始前请选择一个系统文件夹。笔记将始终在文件资源管理器中可见，你也可以像管理普通文件一样重新打开或移动这个文件夹。',closeFolder:'关闭此文件夹'});
+Object.assign(window.PM_I18N.es,{folderGateBody:'Elige una carpeta del sistema antes de empezar. Tus notas estarán visibles en el Explorador y podrás reabrir o mover la carpeta como archivos normales.',closeFolder:'Cerrar carpeta'});
+Object.assign(window.PM_I18N.fr,{folderGateBody:'Choisissez un dossier système avant de commencer. Vos notes restent visibles dans l’Explorateur et le dossier peut être rouvert ou déplacé comme des fichiers ordinaires.',closeFolder:'Fermer le dossier'});
+Object.assign(window.PM_I18N.ja,{folderGateBody:'開始前にシステムフォルダーを選択してください。ノートはエクスプローラーに表示され、通常のファイルと同様にフォルダーを開き直したり移動したりできます。',closeFolder:'フォルダーを閉じる'});
+Object.assign(window.PM_I18N.de,{folderGateBody:'Wählen Sie vor dem Start einen Systemordner. Ihre Notizen bleiben im Datei-Explorer sichtbar; der Ordner kann wie gewöhnliche Dateien erneut geöffnet oder verschoben werden.',closeFolder:'Ordner schließen'});
+Object.assign(window.PM_I18N.pt,{folderGateBody:'Escolha uma pasta do sistema antes de começar. As notas ficam visíveis no Explorador e a pasta pode ser reaberta ou movida como arquivos comuns.',closeFolder:'Fechar pasta'});
+Object.assign(window.PM_I18N.ko,{folderGateBody:'시작하기 전에 시스템 폴더를 선택하세요. 노트는 파일 탐색기에 표시되며 일반 파일처럼 폴더를 다시 열거나 이동할 수 있습니다.',closeFolder:'폴더 닫기'});
+Object.assign(window.PM_I18N.en,{strikethrough:'Strikethrough'});
+Object.assign(window.PM_I18N.zh,{strikethrough:'删除线'});
+Object.assign(window.PM_I18N.es,{strikethrough:'Tachado'});
+Object.assign(window.PM_I18N.fr,{strikethrough:'Barré'});
+Object.assign(window.PM_I18N.ja,{strikethrough:'取り消し線'});
+Object.assign(window.PM_I18N.de,{strikethrough:'Durchgestrichen'});
+Object.assign(window.PM_I18N.pt,{strikethrough:'Tachado'});
+Object.assign(window.PM_I18N.ko,{strikethrough:'취소선'});
+Object.assign(window.PM_I18N.en,{deleteBlock:'Delete block'});
+Object.assign(window.PM_I18N.zh,{deleteBlock:'删除内容块'});
+Object.assign(window.PM_I18N.es,{deleteBlock:'Eliminar bloque'});
+Object.assign(window.PM_I18N.fr,{deleteBlock:'Supprimer le bloc'});
+Object.assign(window.PM_I18N.ja,{deleteBlock:'ブロックを削除'});
+Object.assign(window.PM_I18N.de,{deleteBlock:'Block löschen'});
+Object.assign(window.PM_I18N.pt,{deleteBlock:'Excluir bloco'});
+Object.assign(window.PM_I18N.ko,{deleteBlock:'블록 삭제'});
+Object.assign(window.PM_I18N.en,{adaptiveBlack:'Adaptive black',adaptiveWhite:'Adaptive white'});
+Object.assign(window.PM_I18N.zh,{adaptiveBlack:'自适应黑色',adaptiveWhite:'自适应白色'});
+Object.assign(window.PM_I18N.es,{adaptiveBlack:'Negro adaptable',adaptiveWhite:'Blanco adaptable'});
+Object.assign(window.PM_I18N.fr,{adaptiveBlack:'Noir adaptatif',adaptiveWhite:'Blanc adaptatif'});
+Object.assign(window.PM_I18N.ja,{adaptiveBlack:'自動調整ブラック',adaptiveWhite:'自動調整ホワイト'});
+Object.assign(window.PM_I18N.de,{adaptiveBlack:'Adaptives Schwarz',adaptiveWhite:'Adaptives Weiß'});
+Object.assign(window.PM_I18N.pt,{adaptiveBlack:'Preto adaptável',adaptiveWhite:'Branco adaptável'});
+Object.assign(window.PM_I18N.ko,{adaptiveBlack:'자동 반전 검정',adaptiveWhite:'자동 반전 흰색'});
+Object.assign(window.PM_I18N.en,{workspaceColor:'Workspace color'});
+Object.assign(window.PM_I18N.zh,{workspaceColor:'工作区颜色'});
+Object.assign(window.PM_I18N.es,{workspaceColor:'Color del espacio'});
+Object.assign(window.PM_I18N.fr,{workspaceColor:'Couleur de l’espace'});
+Object.assign(window.PM_I18N.ja,{workspaceColor:'ワークスペースの色'});
+Object.assign(window.PM_I18N.de,{workspaceColor:'Arbeitsbereichsfarbe'});
+Object.assign(window.PM_I18N.pt,{workspaceColor:'Cor do espaço'});
+Object.assign(window.PM_I18N.ko,{workspaceColor:'작업 영역 색상'});
+Object.assign(window.PM_I18N.en,{addEditor:'Add block editor',editorTitle:'Block editor'});
+Object.assign(window.PM_I18N.zh,{addEditor:'添加块编辑器',editorTitle:'块编辑器'});
+Object.assign(window.PM_I18N.es,{addEditor:'Añadir editor de bloques',editorTitle:'Editor de bloques'});
+Object.assign(window.PM_I18N.fr,{addEditor:'Ajouter un éditeur de blocs',editorTitle:'Éditeur de blocs'});
+Object.assign(window.PM_I18N.ja,{addEditor:'ブロックエディターを追加',editorTitle:'ブロックエディター'});
+Object.assign(window.PM_I18N.de,{addEditor:'Blockeditor hinzufügen',editorTitle:'Blockeditor'});
+Object.assign(window.PM_I18N.pt,{addEditor:'Adicionar editor de blocos',editorTitle:'Editor de blocos'});
+Object.assign(window.PM_I18N.ko,{addEditor:'블록 편집기 추가',editorTitle:'블록 편집기'});
+Object.assign(window.PM_I18N.en,{addWorkspace:'Add workspace',addFolder:'Add folder'});Object.assign(window.PM_I18N.zh,{addWorkspace:'添加工作区',addFolder:'添加文件夹'});Object.assign(window.PM_I18N.es,{addWorkspace:'Añadir espacio',addFolder:'Añadir carpeta'});Object.assign(window.PM_I18N.fr,{addWorkspace:'Ajouter un espace',addFolder:'Ajouter un dossier'});Object.assign(window.PM_I18N.ja,{addWorkspace:'ワークスペースを追加',addFolder:'フォルダーを追加'});Object.assign(window.PM_I18N.de,{addWorkspace:'Arbeitsbereich hinzufügen',addFolder:'Ordner hinzufügen'});Object.assign(window.PM_I18N.pt,{addWorkspace:'Adicionar espaço',addFolder:'Adicionar pasta'});Object.assign(window.PM_I18N.ko,{addWorkspace:'작업 영역 추가',addFolder:'폴더 추가'});
+Object.assign(window.PM_I18N.en,{lasso:'Lasso'});Object.assign(window.PM_I18N.zh,{lasso:'套索'});Object.assign(window.PM_I18N.es,{lasso:'Lazo'});Object.assign(window.PM_I18N.fr,{lasso:'Lasso'});Object.assign(window.PM_I18N.ja,{lasso:'なげなわ'});Object.assign(window.PM_I18N.de,{lasso:'Lasso'});Object.assign(window.PM_I18N.pt,{lasso:'Laço'});Object.assign(window.PM_I18N.ko,{lasso:'올가미'});
+Object.assign(window.PM_I18N.en,{penButton:'Pen side button',sideButtonLasso:'Lasso select',sideButtonEraser:'Erase'});Object.assign(window.PM_I18N.zh,{penButton:'手写笔侧键',sideButtonLasso:'套索选择',sideButtonEraser:'擦除'});Object.assign(window.PM_I18N.es,{penButton:'Botón lateral del lápiz',sideButtonLasso:'Selección con lazo',sideButtonEraser:'Borrar'});Object.assign(window.PM_I18N.fr,{penButton:'Bouton latéral du stylet',sideButtonLasso:'Sélection au lasso',sideButtonEraser:'Effacer'});Object.assign(window.PM_I18N.ja,{penButton:'ペンのサイドボタン',sideButtonLasso:'なげなわ選択',sideButtonEraser:'消去'});Object.assign(window.PM_I18N.de,{penButton:'Stift-Seitentaste',sideButtonLasso:'Lassoauswahl',sideButtonEraser:'Radieren'});Object.assign(window.PM_I18N.pt,{penButton:'Botão lateral da caneta',sideButtonLasso:'Seleção por laço',sideButtonEraser:'Apagar'});Object.assign(window.PM_I18N.ko,{penButton:'펜 측면 버튼',sideButtonLasso:'올가미 선택',sideButtonEraser:'지우기'});
+Object.assign(window.PM_I18N.en,{moveInk:'Move ink',bringFront:'Bring to front',inkColor:'Ink color'});Object.assign(window.PM_I18N.zh,{moveInk:'移动墨迹',bringFront:'置于顶层',inkColor:'墨迹颜色'});Object.assign(window.PM_I18N.es,{moveInk:'Mover tinta',bringFront:'Traer al frente',inkColor:'Color de tinta'});Object.assign(window.PM_I18N.fr,{moveInk:'Déplacer l’encre',bringFront:'Mettre au premier plan',inkColor:'Couleur de l’encre'});Object.assign(window.PM_I18N.ja,{moveInk:'インクを移動',bringFront:'最前面へ',inkColor:'インクの色'});Object.assign(window.PM_I18N.de,{moveInk:'Freihand verschieben',bringFront:'In den Vordergrund',inkColor:'Freihandfarbe'});Object.assign(window.PM_I18N.pt,{moveInk:'Mover tinta',bringFront:'Trazer para frente',inkColor:'Cor da tinta'});Object.assign(window.PM_I18N.ko,{moveInk:'잉크 이동',bringFront:'맨 앞으로',inkColor:'잉크 색'});
+Object.assign(window.PM_I18N.en,{back:'Back'});Object.assign(window.PM_I18N.zh,{back:'\u8fd4\u56de'});Object.assign(window.PM_I18N.es,{back:'Volver'});Object.assign(window.PM_I18N.fr,{back:'Retour'});Object.assign(window.PM_I18N.ja,{back:'\u623b\u308b'});Object.assign(window.PM_I18N.de,{back:'Zur\u00fcck'});Object.assign(window.PM_I18N.pt,{back:'Voltar'});Object.assign(window.PM_I18N.ko,{back:'\ub4a4\ub85c'});
