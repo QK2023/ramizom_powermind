@@ -37,7 +37,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.some(icon => String(icon.purpose || '').includes('maskable') && String(icon.sizes).includes('512')), 'A 512px maskable icon backs OS icon masks');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png"'), 'Page declares an opaque Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png"'), 'Page declares an Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -148,7 +148,34 @@ async function run() {
   const square=[{x:0,y:0},{x:10,y:0},{x:10,y:10},{x:0,y:10}];
   assert.equal(context.pointInPolygon({x:5,y:5},square),true);
   assert.equal(context.pointInPolygon({x:15,y:5},square),false);
-  console.log('PASS: syntax, unified editor path, import tree/IDs/content/source isolation, missing optional fields, system-folder storage, ink geometry');
+  // --- Touch ink cost: Android gets a smaller buffer, Windows keeps the pen contract byte for byte ---
+  assert(source.includes("function coarsePointer(){return matchMedia('(pointer:coarse)').matches;}"), 'Touch-only devices are identified through one shared helper');
+  assert(source.includes("quality=canvas.id==='inkOverlay'?(touch?.6:1):clamp((window.devicePixelRatio||1)*state.view.zoom,1,touch?1:1.25)"), 'Touch devices cap the ink buffer at 1:1 while pen devices keep the sharper 1.25 cap');
+  assert(html.includes('<canvas id="inkCanvas" width="1" height="1">'), 'The ink backing store is allocated on demand instead of at parse time');
+  assert(html.includes('<canvas id="inkOverlay" width="1" height="1"'), 'The lasso overlay backing store is allocated on demand instead of at parse time');
+  assert(/#inkCanvas\s*\{[^}]*width:\s*4000px[^}]*height:\s*3000px/.test(css), 'The ink canvas keeps its world-sized CSS box so a small backing store still covers the canvas');
+  assert(/#inkOverlay\s*\{[^}]*width:\s*4000px[^}]*height:\s*3000px/.test(css), 'The overlay keeps its world-sized CSS box so a small backing store still covers the canvas');
+  assert(source.includes("if(!hasContent){box.hidden=true;if(canvas.dataset.painted!=='1')return;"), 'Repainting the overlay is skipped entirely while nothing is painted on it');
+  assert(source.includes("const painted=state.inkSelection.size>0||$('#inkOverlay').dataset.painted==='1'"), 'Starting a stroke only clears the overlay when something is painted on it');
+  assert(source.includes('const rect=inkCanvasRect||(inkCanvasRect=canvas.getBoundingClientRect())'), 'Ink sampling reuses cached canvas bounds instead of forcing layout for every sample');
+  assert(source.includes('strokeTouch=coarse;inkCanvasRect=canvas.getBoundingClientRect();'), 'The cached ink bounds are refreshed once per stroke');
+  assert(source.includes('inkCanvasRect = null;'), 'Pan, zoom and fit invalidate the cached ink bounds');
+  assert(source.includes('palmLimit=coarse?140:24'), 'Finger contacts draw on touch-only devices while pen-first devices keep the original 24px palm rule');
+  assert(source.includes("minimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7"), 'The pen keeps its dense .22 sampling while touch strokes filter wider');
+  assert(source.includes("if(event.pointerType==='mouse')updateInkCursor(event)"), 'Ink cursor styling is only touched by a mouse');
+  assert(source.includes('coordinateFrame=requestAnimationFrame('), 'The canvas coordinate read-out is coalesced into one frame');
+  // --- Mind map: selectable and draggable as a whole ---
+  assert(source.includes('function ideaDragGroup(idea, note)'), 'The mind map has an explicit drag-group helper');
+  assert(source.includes('if (!idea?.root) return null;'), 'Only the map root carries the whole map, so single nodes keep free positioning');
+  assert(source.includes('group:()=>ideaDragGroup(idea,note)'), 'Idea nodes are wired to group dragging');
+  assert(source.includes('options.onPointerDown?.(event)'), 'A drag can select its object before movement');
+  assert(source.includes("onPointerDown:()=>selectObject('idea',idea.id,element)"), 'Grabbing an idea selects it, because preventDefault suppresses the follow-up click');
+  assert(source.includes("window.addEventListener('pointermove',move,{passive:true})"), 'A drag tracks on window so a dropped pointer capture cannot strand a node');
+  assert(source.includes('if(pointer.pointerId!==dragId)return;'), 'A stray second pointer cannot drive an active drag');
+  assert(source.includes("window.removeEventListener('pointermove',move)"), 'Drag listeners are always removed when the drag ends');
+  assert(!source.includes("element.addEventListener('pointermove',move)"), 'No drag binds its move handler to the dragged element');
+  assert(css.includes('.idea-node.dragging {') && css.includes('.idea-node.group-dragging {'), 'Dragging a node or its whole map is visible');
+  console.log('PASS: syntax, unified editor path, import tree/IDs/content/source isolation, missing optional fields, system-folder storage, ink geometry, touch/pen ink cost split, mind-map group drag');
 }
 module.exports = run;
 if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });

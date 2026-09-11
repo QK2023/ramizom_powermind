@@ -213,8 +213,9 @@
         <div class="canvas-world" id="canvasWorld">
           <svg class="connection-layer" id="connectionLayer"></svg>
           <svg class="alignment-layer" id="alignmentLayer" aria-hidden="true"></svg>
-          <canvas id="inkCanvas" width="4000" height="3000"></canvas>
-          <canvas id="inkOverlay" width="4000" height="3000" aria-hidden="true"></canvas>
+          <!-- Backing stores start tiny: inkContext() allocates the real buffer on demand, which keeps a 12MP overlay off the heap until a lasso/selection actually exists. -->
+          <canvas id="inkCanvas" width="1" height="1"></canvas>
+          <canvas id="inkOverlay" width="1" height="1" aria-hidden="true"></canvas>
           <div class="ink-guide" id="inkGuide" hidden><span class="guide-grip"></span></div>
           <div class="ink-selection-box" id="inkSelectionBox" hidden><div class="ink-selection-menu"><button type="button" data-ink-action="move" data-i18n-aria="moveInk"><svg><use href="#i-hand"/></svg></button><button type="button" data-ink-action="duplicate" data-i18n-aria="duplicate"><svg><use href="#i-copy"/></svg></button><button type="button" data-ink-action="front" data-i18n-aria="bringFront"><svg><use href="#i-front"/></svg></button><label data-i18n-aria="inkColor"><input id="selectedInkColor" type="color" value="#1267c4"><span></span></label><button type="button" data-ink-action="delete" data-i18n-aria="delete"><svg><use href="#i-trash"/></svg></button></div></div>
 <section class="document-card" id="documentCard"></section>

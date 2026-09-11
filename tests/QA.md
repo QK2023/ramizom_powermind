@@ -1,5 +1,66 @@
 # Ramizom PowerMind 回归记录
 
+## 2026-09-12 — 图标圆角修正（遮罩图标与 apple-touch-icon）
+
+### 已修复
+
+- **上一轮的"遮罩图标填角"方案本身就是直角观感的来源**：当时为了让启动闪屏不出现黑角，把 `icon-maskable-192/512.png` 的圆角之外用 `background_color`（`#f5eee9`）填满。这个做法只在"图标背后的那个面恰好是同一颜色"时看不出来；在其它底色上（桌面背景、任务栏、白色面板等）就变成"浅色方块里嵌一个圆角 logo"，所以看起来仍然是直角。现在生成器不再涂角，五个 PNG 一律保持**透明圆角**：被遮罩时由系统/启动器裁成自己的形状，未被遮罩时四个角直接透出背后的颜色，因此在任何底色上都是圆角轮廓。
+- **`apple-touch-icon.png` 一直是完全方角**：生成参数是 `-Round $false`，也就是唯一一个零圆角的资源。现改为与其它图标同一套圆角轮廓（`-Round $true`，180px，ArtScale 0.95）。
+- `icon-maskable-192/512.png` 仍按 `ArtScale 0.9` 内缩，保证图案留在 80% 中心安全区内，任何遮罩或裁切都不会切到画面主体。
+- `README.md` 的图标契约改写：不再声称"遮罩图标不能含透明像素"，改为说明整套图标保持透明圆角、未遮罩的表面透出背后颜色，并说明 `background_color` 保持 `#f5eee9`，让闪屏透出的透明角与背景融合。
+- `tests/regression.cjs` 中对应断言文案由 "Page declares an opaque Apple touch icon" 改为 "Page declares an Apple touch icon"。
+
+### 本次已验证
+
+- 重新生成后逐像素采样五个 PNG（System.Drawing）：
+  - `icon-192.png` / `icon-maskable-192.png`：`(0,0)=0`、`(2,2)=0`（alpha 0，角落透明），`topEdge(mid,1)=255`、`leftEdge(1,mid)=255`、`centre=255`，非全透明采样点 422 个。
+  - `icon-512.png` / `icon-maskable-512.png`：同样 `(0,0)=0`、`(2,2)=0`，边缘与中心 255，非全透明采样点 2802 个。
+  - `apple-touch-icon.png`：`(0,0)=0`、`(2,2)=0`，边缘与中心 255，非全透明采样点 377 个。
+  - 即：五个资源的四角确实透明（真正的圆角轮廓），而边缘中点与中心仍然不透明（没有把整个图标掏空）。
+- 目视确认 `icon-maskable-512.png` 与 `apple-touch-icon.png` 已是圆角，角落不再有浅色方块。
+- 复现命令（开发机可用；执行策略需 `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force` 先放开当前进程）：
+  `& .tmp/make-icons.ps1`，随后用 `System.Drawing.Bitmap::FromFile` + `GetPixel(...).A` 采样四角与中心。
+
+### 仍需专项验证
+
+- **真机确认启动闪屏与桌面图标**：本轮只能验证 PNG 文件的像素，无法验证 Android 的遮罩合成与 Chrome 启动闪屏的实际渲染。
+- **已安装的应用可能仍显示旧图标**：图标 URL 没带版本号，Chrome 会在后台刷新已安装应用（WebAPK）时重新拉取，但即时生效通常需要**卸载后重装**，或在系统里等待其后台更新。
+- **若真机上圆角处出现黑边**（即 Android 把遮罩图标透明区合成到黑色底上，而不是透出 `background_color`），则应改用"全出血"方案：圆角也填满品牌渐变、完全交给系统遮罩去切圆角。两者无法同时满足，当前按"任何底色下都呈圆角"优先。
+
+## 2026-09-12 — Android 触屏手写流畅度与思维导图整体拖动
+
+### 已修复
+
+- **Android 手写延迟（仅移动端；Windows 笔迹契约逐字节未动）**：实测 Android 视口（390×844、DPR 2.75、`(pointer:coarse)` 为真、适应缩放 48%）下 `#inkCanvas` 的后备缓冲被 `clamp(dpr×zoom,1,1.25)` 撑到 **5000×3750（18.75 MP）**，而 `#inkOverlay` 因为启动时无条件清屏被固定分配 **4000×3000（12 MP）**，合计 **30.75 MP** 画布每帧都要合成/上传——这是触屏"字迹延迟"的主因。现在：① 粗指针设备把墨迹缓冲钳制到 1:1（12 MP），细指针设备（Windows 触控笔/鼠标）保持 1.25 不变；② lasso 叠加层在粗指针下使用 0.6 倍缓冲，并且**只有真正画过东西才会分配**；③ 两个 canvas 的 HTML 初始尺寸从 4000×3000 改为 1×1，避免解析期先分配 12 MP 再重建。常规书写路径的画布占用从 **30.75 MP 降到 12 MP**（叠加层为 0 MP）。
+- **每个采样点都强制一次布局**：`setupInk` 的 `point()` 对每个采样点（含 `getCoalescedEvents()` 展开后的每个合并点）都调用 `canvas.getBoundingClientRect()`。现改为每笔开始时缓存一次矩形，并在 `updateTransform()`（平移/缩放/适应）里置空。
+- **起笔时无条件清空叠加层**：每笔开头都执行 `inkSelection.clear()` + `renderInkSelection()`，而后者无条件 `clearRect(0,0,4000,3000)` 并读取 `getComputedStyle(document.body)`。现在只有叠加层确实画过东西（`dataset.painted`）时才清屏，"无内容且未画过"时直接返回。
+- **手指被当成手掌拒掉**：手掌判定为 `Math.max(event.width, event.height) > 24`（CSS px）。实测 Chrome 对**一根手指**上报的接触宽度约 **76 px**（CDP `radiusX=15` 即得上报 75.9），这条 24px 规则几乎拒绝了所有手指笔画。现在粗指针设备只用 140 以上判定掌心/掌根，并保留"1.8 秒内出现过笔"的笔优先窗口；细指针设备（Windows）**仍然是 24**，行为不变。
+- **每个 pointermove 都写 DOM**：`#inkCursor` 的样式写入与 `#canvasCoordinates` 的文本写入原先都在每次 `pointermove` 上执行。现分别改为"仅鼠标指针"与"合并到每帧一次"（`requestAnimationFrame`），并把每帧的 `getBoundingClientRect()` 从每事件一次降到每帧一次。
+- **触摸采样阈值**：触摸笔画的最小采样距离由 0.7 提到 1.2（世界单位），减少高刷屏（120Hz + 合并事件）下的分段绘制次数；笔仍为 0.22，未改动。
+- **思维导图在 select 模式下选不中**：`bindWorldDrag` 在 `pointerdown` 里调用 `preventDefault()`，浏览器因此不再派发后续 `click`，节点上的 `click → selectObject()` 永不触发，节点无法被选中；拖动时也没有任何反馈（`style.css` 中原本没有 `.idea-node.dragging` 规则）。现在改为 `pointerdown` 即选中，并补上 `.idea-node.dragging`（抓取光标）与 `.idea-node.group-dragging`（整图随动高亮环）。
+- **整张思维导图一起拖动**：拖动**根节点**时，整张图（含折叠分支的坐标）按同一增量整体平移并重绘连线；拖动子节点仍是原有的自由定位。根节点拖动时不参与对齐吸附，避免整图被吸到辅助线上。
+- **拖拽实现本身的既有缺陷（对所有可拖对象生效）**：原本 `pointermove`/`pointerup` 都绑在被拖元素上并依赖 `setPointerCapture` 兜底。实测捕获会在起笔后立即丢失（`gotpointercapture` 之后紧跟 `lostpointercapture`，`pointerup` 落到 `canvasWorld` 而非节点），于是 `end()` 从不执行：`.dragging` 类残留，更严重的是**残留的 `pointermove` 监听再也不会被移除**，鼠标不按键从该节点划过就会拖着节点跑。现改为在 `window` 上跟踪、用 `pointerId` 过滤、`end()` 无条件解绑（`setPointerCapture` 仅作尽力而为）。桌面卡片拖动同样受益。
+
+### 本次已验证
+
+- **Android 触屏（真实 CDP 触摸输入，非合成事件；390×844、DPR 2.75）**：`(pointer:coarse)` 为真；`#inkCanvas` 4000×3000（**12 MP**，`dataset.quality="1"`），`#inkOverlay` 1×1（**0 MP**，`dataset.painted` 为空）；一根手指（`radiusX=15` → 上报宽度 75.9）落笔后墨迹像素 0 → 9 → 再写一笔 14，**手指可正常书写**；掌心接触（`radiusX=45`）像素数保持 14 不变，**被正确忽略**；Undo 由禁用变为可用。
+- **Windows/触控笔路径未受影响（细指针、DPR 1、1440×900）**：`(pointer:coarse)` 为假；放大到 180% 时 `dataset.quality="1.25"`、缓冲 **5000×3750**，与改动前完全一致；真实笔事件（`Input.dispatchMouseEvent` + `pointerType:'pen'`）连续 31 点笔画后墨迹像素 0 → 12、Undo 可用；同一设备上 `radiusX=15` 的触摸仍被 24px 规则拒绝。
+- **思维导图整体拖动**：在根节点上拖动 (155,103)，**四个节点位移完全一致**（dx/dy 均为 155/103），连线仍为 3 条；拖动过程中 `.dragging`×1 + `.group-dragging`×3 + `.selected`×1，松开后拖动类全部清除、`.selected` 保留在根节点；拖动子节点时**只有该子节点移动**（+120/+76），其余三个为 0。
+- **选中**：单击子节点即出现 `.selected`（修复前 `preventDefault` 吞掉 `click`，永远选不中）；单击不产生任何位移。
+- **拖动结束后不再"粘住"**：拖动结束后的空手 `pointermove` 不再移动任何节点（修复前会持续跟随光标）。
+- **既有拖拽对象回归**：桌面 `#documentCard` 从自身留白处拖动 620/420 → 730/482，`.dragging` 拖动中出现、结束后清除，Undo 可用，空手移动不再改变位置；抓文本区/缩放手柄时按原设计不触发拖动。
+- 全程未捕获到未预期的 console error / pageerror（未连接文件夹时的 "Choose a system folder" 为预期行为）。
+- `regression.cjs` 新增的 25 条断言所依赖的字符串已逐条在源码中确认存在（含"不得再把 pointermove 绑在被拖元素上"这条反向断言）。
+
+### 仍需专项验证
+
+- **本轮仍未执行 `node tests/regression.cjs`**（开发机无 Node.js）。上线前必须在有 Node 的机器上完整跑一遍。
+- **触屏真机确认**：上述触屏数据来自桌面 Chromium 的触摸模拟（`Emulation.setTouchEmulationEnabled` + CDP `Input.dispatchTouchEvent`），上报的接触宽度是模拟值。需在真实 Android Chrome 上确认：手指书写是否顺畅、手掌是否会误写、抬笔后是否仍有残留卡顿。
+- **未量化真机延迟收益**：本机只能确认画布占用从 30.75 MP 降至 12 MP、每笔少一次强制布局、每帧少若干次 DOM 写入；"笔迹到屏幕"的实际延迟改善需真机用 Event Timing / screencast 复核。
+- **`checkpoint()` 每笔结束深拷贝整篇笔记**：实测 300 笔约 10 ms、600 笔约 19 ms（本机 JSON 深拷贝；`structuredClone` 更慢，故未替换），历史保留 40 层。笔迹很多的长笔记在手机上抬笔仍会有一次可感知卡顿，属既有行为，本轮未改动。
+- **粗指针下叠加层使用 0.6 倍缓冲**：虚线选区边框在 Android 上是 1.67 倍放大（线宽视觉一致、边缘略软）。若真机观感不佳可改为 1.0。
+- **重做/回退（Undo/Redo）后的整图拖动**：本轮验证的是常规路径；`undo()` 会替换整个笔记对象并重渲染，绑定闭包随元素重建，理论上安全，但未逐项实测。
+
 ## 2026-09-12 — 移动端与主题启动修正
 
 ### 已修复

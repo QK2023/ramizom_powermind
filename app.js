@@ -10,6 +10,8 @@
   const safeDataImage = value => /^data:image\/(?:png|jpe?g|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(String(value||'')) ? String(value) : '';
   const normalizedId = (value, used) => {let next=/^[A-Za-z0-9_-]{1,128}$/.test(String(value||''))?String(value):id();while(used.has(next))next=id();used.add(next);return next;};
 
+  // Cached ink-canvas bounds, valid for the duration of one stroke. Invalidated by updateTransform() so pan/zoom/pinch can never leave a stale rect behind.
+  let inkCanvasRect = null;
   const state = {
     db: null,
     workspaceId: null,
@@ -370,7 +372,7 @@
       const idea = note.ideas.find(item => item.id === element.dataset.ideaId);
       $('input',element)?.addEventListener('input', event => { idea.text = event.target.value; markChanged(); });
       $('input',element)?.addEventListener('keydown',event=>{if(event.key==='Tab'){event.preventDefault();addChildIdea(idea.id);}else if(event.key==='Enter'){event.preventDefault();idea.root?addChildIdea(idea.id):addSiblingIdea(idea.id);}else if(event.key==='ArrowLeft'&&idea.parentId){event.preventDefault();focusIdea(idea.parentId);}else if(event.key==='ArrowRight'){const child=note.ideas.find(item=>item.parentId===idea.id);if(child){event.preventDefault();focusIdea(child.id);}}else if((event.key==='ArrowUp'||event.key==='ArrowDown')&&idea.parentId){const siblings=note.ideas.filter(item=>item.parentId===idea.parentId),index=siblings.indexOf(idea),next=siblings[index+(event.key==='ArrowUp'?-1:1)];if(next){event.preventDefault();focusIdea(next.id);}}else if(event.key==='Escape')event.target.blur();});
-      bindWorldDrag(element, idea, () => drawConnections());
+      bindWorldDrag(element, idea, () => drawConnections(), {onPointerDown:()=>selectObject('idea',idea.id,element),group:()=>ideaDragGroup(idea,note)});
       element.addEventListener('click', event => { event.stopPropagation(); selectObject('idea', idea.id, element); });
       element.addEventListener('dblclick',()=>{if(idea.formula)openFormulaDialog('mindmap',idea.id);else editIdea(idea.id);});
       element.addEventListener('contextmenu',event=>{if(event.target.closest('input'))return;event.preventDefault();event.stopPropagation();selectObject('idea',idea.id,element);openObjectContextMenu('idea',idea.id,event.clientX,event.clientY);});
@@ -518,23 +520,45 @@
     drawAlignmentGuides(guides);return{x:Math.round(x),y:Math.round(y)};
   }
 
-  function bindWorldDrag(element, object, onMove = () => {}) {
+  // Dragging the root of a mind map carries the entire map as one unit; children keep their free-positioning behaviour.
+  function ideaDragGroup(idea, note) {
+    if (!idea?.root) return null;
+    return (note?.ideas || []).filter(item => item.id !== idea.id).map(item => ({ object: item, element: $(`[data-idea-id="${item.id}"]`) }));
+  }
+
+  function bindWorldDrag(element, object, onMove = () => {}, options = {}) {
     element.addEventListener('pointerdown', event => {
       if (state.readingMode||state.tool !== 'select' || event.target.closest('button,[contenteditable],[data-secondary-resize],.document-resize-handle') || (event.target.closest('input')&&!event.target.readOnly)) return;
-      event.preventDefault();element.setPointerCapture(event.pointerId);let moved=false;
-      const startX = event.clientX, startY = event.clientY, originX = object.x, originY = object.y;
+      event.preventDefault();
+      options.onPointerDown?.(event);
+      const extra=options.group?options.group(event)||[]:[];
+      const dragId=event.pointerId;
+      try{element.setPointerCapture(dragId);}catch{/* capture is best-effort only: the drag itself listens on window */}
+      let moved=false;
+      const startX = event.clientX, startY = event.clientY;
+      const members=[{object,element},...extra].map(member=>({object:member.object,element:member.element||null,x:member.object.x,y:member.object.y}));
+      const grouped=members.length>1;
+      // Tracking on window (instead of the element) survives the capture being dropped and the pointer leaving the node, so a release outside the node can no longer leave a node glued to the cursor.
       const move = pointer => {
-        if(!moved&&Math.hypot(pointer.clientX-startX,pointer.clientY-startY)<4)return;if(!moved){checkpoint();moved=true;element.classList.add('dragging');}
-        const rawX=originX+(pointer.clientX-startX)/state.view.zoom,rawY=originY+(pointer.clientY-startY)/state.view.zoom,snapped=pointer.altKey?(clearAlignmentGuides(),{x:Math.round(rawX),y:Math.round(rawY)}):snapWorldPosition(element,rawX,rawY);
-        object.x=snapped.x;object.y=snapped.y;
-        element.style.left = `${object.x}px`; element.style.top = `${object.y}px`; onMove();
+        if(pointer.pointerId!==dragId)return;
+        if(!moved&&Math.hypot(pointer.clientX-startX,pointer.clientY-startY)<4)return;
+        if(!moved){checkpoint();moved=true;members.forEach((member,index)=>member.element?.classList.add(index?'group-dragging':'dragging'));}
+        const dx=(pointer.clientX-startX)/state.view.zoom,dy=(pointer.clientY-startY)/state.view.zoom;
+        if(grouped){clearAlignmentGuides();members.forEach(member=>{member.object.x=Math.round(member.x+dx);member.object.y=Math.round(member.y+dy);if(member.element){member.element.style.left=`${member.object.x}px`;member.element.style.top=`${member.object.y}px`;}});}
+        else {const rawX=members[0].x+dx,rawY=members[0].y+dy,snapped=pointer.altKey?(clearAlignmentGuides(),{x:Math.round(rawX),y:Math.round(rawY)}):snapWorldPosition(element,rawX,rawY);
+          object.x=snapped.x;object.y=snapped.y;
+          element.style.left = `${object.x}px`; element.style.top = `${object.y}px`;}
+        onMove();
       };
-      const end = () => { clearAlignmentGuides();element.classList.remove('dragging');element.removeEventListener('pointermove',move); element.removeEventListener('pointerup',end);element.removeEventListener('pointercancel',end);if(moved)markChanged(); };
-      element.addEventListener('pointermove',move); element.addEventListener('pointerup',end);element.addEventListener('pointercancel',end);
+      const end = () => { window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end);
+        clearAlignmentGuides();members.forEach(member=>member.element?.classList.remove('dragging','group-dragging'));if(moved)markChanged(); };
+      window.addEventListener('pointermove',move,{passive:true}); window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);
     });
   }
 
-  function inkContext(canvas){const quality=canvas.id==='inkOverlay'?1:clamp((window.devicePixelRatio||1)*state.view.zoom,1,1.25),width=Math.round(4000*quality),height=Math.round(3000*quality);if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;canvas.dataset.quality=quality;}const context=canvas.getContext('2d',{alpha:true,desynchronized:true});context.setTransform(quality,0,0,quality,0,0);return context;}
+  function coarsePointer(){return matchMedia('(pointer:coarse)').matches;}
+  // Touch devices keep a 1:1 ink buffer (12MP instead of 18.75MP) and a lighter lasso overlay, which is what makes compositing and ink-to-glass latency bearable on Android. Pointer-fine devices (pen/mouse on Windows) keep the sharper 1.25 quality and full-resolution overlay.
+  function inkContext(canvas){const touch=coarsePointer(),quality=canvas.id==='inkOverlay'?(touch?.6:1):clamp((window.devicePixelRatio||1)*state.view.zoom,1,touch?1:1.25),width=Math.round(4000*quality),height=Math.round(3000*quality);if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;canvas.dataset.quality=quality;}const context=canvas.getContext('2d',{alpha:true,desynchronized:true});context.setTransform(quality,0,0,quality,0,0);return context;}
   function renderInk() {
     const canvas = $('#inkCanvas');
     const context = inkContext(canvas);
@@ -550,11 +574,14 @@
   }
 
   function renderInkSelection(lassoPoints=null){
-    const canvas=$('#inkOverlay'),context=inkContext(canvas);context.clearRect(0,0,4000,3000);
+    const canvas=$('#inkOverlay'),box=$('#inkSelectionBox'),hasContent=Boolean(lassoPoints?.length||state.inkSelection.size);
+    // Nothing to show and nothing painted: skip the clear, the getComputedStyle lookup and the (up to 12MP) buffer touch entirely.
+    if(!hasContent){box.hidden=true;if(canvas.dataset.painted!=='1')return;inkContext(canvas).clearRect(0,0,4000,3000);canvas.dataset.painted='0';return;}
+    const context=inkContext(canvas);context.clearRect(0,0,4000,3000);canvas.dataset.painted='1';
     context.save();context.strokeStyle=getComputedStyle(document.body).getPropertyValue('--nav-accent').trim()||'#0f6cbd';context.lineWidth=2/state.view.zoom;context.setLineDash([7/state.view.zoom,5/state.view.zoom]);
     if(lassoPoints?.length){context.beginPath();context.moveTo(lassoPoints[0].x,lassoPoints[0].y);lassoPoints.slice(1).forEach(point=>context.lineTo(point.x,point.y));context.stroke();}
     const selected=(activeNote()?.inkStrokes||[]).filter(stroke=>state.inkSelection.has(stroke.id)).flatMap(stroke=>stroke.points||[]);
-    const box=$('#inkSelectionBox');if(selected.length){const bounds=selected.reduce((result,p)=>({left:Math.min(result.left,p.x),top:Math.min(result.top,p.y),right:Math.max(result.right,p.x),bottom:Math.max(result.bottom,p.y)}),{left:Infinity,top:Infinity,right:-Infinity,bottom:-Infinity}),pad=9/state.view.zoom;context.strokeRect(bounds.left-pad,bounds.top-pad,bounds.right-bounds.left+pad*2,bounds.bottom-bounds.top+pad*2);box.hidden=false;box.style.left=`${bounds.left-pad}px`;box.style.top=`${bounds.top-pad}px`;box.style.width=`${Math.max(28/state.view.zoom,bounds.right-bounds.left+pad*2)}px`;box.style.height=`${Math.max(28/state.view.zoom,bounds.bottom-bounds.top+pad*2)}px`;}else box.hidden=true;
+    if(selected.length){const bounds=selected.reduce((result,p)=>({left:Math.min(result.left,p.x),top:Math.min(result.top,p.y),right:Math.max(result.right,p.x),bottom:Math.max(result.bottom,p.y)}),{left:Infinity,top:Infinity,right:-Infinity,bottom:-Infinity}),pad=9/state.view.zoom;context.strokeRect(bounds.left-pad,bounds.top-pad,bounds.right-bounds.left+pad*2,bounds.bottom-bounds.top+pad*2);box.hidden=false;box.style.left=`${bounds.left-pad}px`;box.style.top=`${bounds.top-pad}px`;box.style.width=`${Math.max(28/state.view.zoom,bounds.right-bounds.left+pad*2)}px`;box.style.height=`${Math.max(28/state.view.zoom,bounds.bottom-bounds.top+pad*2)}px`;}else box.hidden=true;
     context.restore();
   }
 
@@ -624,29 +651,31 @@
   function eraseWholeStrokeAt(next){const note=activeNote(),radius=Math.max(10,state.pen.size*3.2),before=note.inkStrokes.length;note.inkStrokes=note.inkStrokes.filter(item=>!item.points?.some(point=>Math.hypot(point.x-next.x,point.y-next.y)<=radius));return before!==note.inkStrokes.length;}
 
   function updateInkCursor(event){const cursor=$('#inkCursor');if(!cursor)return;const erasing=state.pen.mode.startsWith('eraser'),color=resolveInkColor(state.pen.color);cursor.style.setProperty('--ink-cursor-color',color);cursor.style.setProperty('--ink-cursor-size',`${clamp((erasing?state.pen.size*2.4:state.pen.size),4,18)}px`);cursor.classList.toggle('eraser',erasing);if(event){const rect=$('#canvasViewport').getBoundingClientRect();cursor.style.left=`${event.clientX-rect.left}px`;cursor.style.top=`${event.clientY-rect.top}px`;cursor.classList.toggle('show',state.tool==='ink'&&event.pointerType==='mouse');}}
-  function setupInkCursor(){const viewport=$('#canvasViewport'),cursor=$('#inkCursor');viewport.addEventListener('pointermove',event=>updateInkCursor(event),{passive:true});viewport.addEventListener('pointerleave',()=>cursor.classList.remove('show'));viewport.addEventListener('pointercancel',()=>cursor.classList.remove('show'));}
+  function setupInkCursor(){const viewport=$('#canvasViewport'),cursor=$('#inkCursor');viewport.addEventListener('pointermove',event=>{if(event.pointerType==='mouse')updateInkCursor(event);},{passive:true});viewport.addEventListener('pointerleave',()=>cursor.classList.remove('show'));viewport.addEventListener('pointercancel',()=>cursor.classList.remove('show'));}
 
   function setupInk() {
     const canvas = $('#inkCanvas');
     const point = event => {
-      const rect = canvas.getBoundingClientRect();
+      const rect=inkCanvasRect||(inkCanvasRect=canvas.getBoundingClientRect());
       return { x:(event.clientX-rect.left)/state.view.zoom, y:(event.clientY-rect.top)/state.view.zoom, p:event.pressure > 0 ? event.pressure : .5 };
     };
-    let context=inkContext(canvas),stroke=null,pointerId=null,lastEventTime=-1,lastPenSeen=-Infinity,strokeErased=false;
+    let context=inkContext(canvas),stroke=null,pointerId=null,lastEventTime=-1,lastPenSeen=-Infinity,strokeErased=false,strokeTouch=false;
     const requestedMode=event=>event.pointerType==='pen'&&((event.button===5||(event.buttons&32))?'eraser-stroke':(event.button===2||(event.buttons&2))?(localStorage.getItem('pm.penButtonAction')||'lasso'):null);
     canvas.addEventListener('pointerover',event=>{if(event.pointerType==='pen')lastPenSeen=performance.now();},{passive:true});
     canvas.addEventListener('pointerdown', event => {
       if(event.pointerType==='pen')lastPenSeen=performance.now();
-      if (state.tool !== 'ink'||state.drawing||(event.pointerType==='touch'&&(performance.now()-lastPenSeen<1800||Math.max(event.width||0,event.height||0)>24))||(event.pointerType!=='pen'&&event.button!==0)) return;
-      event.preventDefault();event.stopPropagation();state.drawing=true;pointerId=event.pointerId;lastEventTime=-1;
+      // A finger contact reports ~40-90 CSS px of contact width (Chrome scales the Android touch ellipse up), so the old flat 24px limit rejected virtually every finger stroke. Touch-only devices therefore only ignore a genuine palm/heel (>140) and keep the pen-priority window; pen-first devices (Windows) keep the original 24px rule untouched.
+      const coarse=coarsePointer(),palmLimit=coarse?140:24;
+      if (state.tool !== 'ink'||state.drawing||(event.pointerType==='touch'&&(performance.now()-lastPenSeen<1800||Math.max(event.width||0,event.height||0)>palmLimit))||(event.pointerType!=='pen'&&event.button!==0)) return;
+      event.preventDefault();event.stopPropagation();state.drawing=true;pointerId=event.pointerId;lastEventTime=-1;strokeTouch=coarse;inkCanvasRect=canvas.getBoundingClientRect();
       const mode=requestedMode(event)||state.pen.mode;strokeErased=false;stroke={id:id(),mode,color:state.pen.color,size:state.pen.size,points:[constrainInkPoint(point(event))],temporary:mode!==state.pen.mode};if(mode==='eraser-stroke'){checkpoint();strokeErased=eraseWholeStrokeAt(stroke.points[0]);if(strokeErased)renderInk();}
-      if(mode!=='lasso'){state.inkSelection.clear();renderInkSelection();}
+      if(mode!=='lasso'){const painted=state.inkSelection.size>0||$('#inkOverlay').dataset.painted==='1';state.inkSelection.clear();if(painted)renderInkSelection();}
       canvas.setPointerCapture(event.pointerId);
     });
     const sample=event=>{
       if(!state.drawing||event.pointerId!==pointerId||event.timeStamp===lastEventTime)return;if(event.pointerType==='pen')lastPenSeen=performance.now();lastEventTime=event.timeStamp;
       const events=event.getCoalescedEvents?.()||[event];let added=false;
-      for(const source of events){const next=constrainInkPoint(point(source)),last=stroke.points.at(-1),minimum=source.pointerType==='pen'?.22:.7;if(Math.hypot(next.x-last.x,next.y-last.y)<minimum)continue;stroke.points.push(next);added=true;if(stroke.mode==='eraser-stroke'){if(eraseWholeStrokeAt(next)){strokeErased=true;renderInk();}}else if(stroke.mode!=='lasso')drawStroke(context,stroke,stroke.points.length-1);}
+      for(const source of events){const next=constrainInkPoint(point(source)),last=stroke.points.at(-1),minimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7;if(Math.hypot(next.x-last.x,next.y-last.y)<minimum)continue;stroke.points.push(next);added=true;if(stroke.mode==='eraser-stroke'){if(eraseWholeStrokeAt(next)){strokeErased=true;renderInk();}}else if(stroke.mode!=='lasso')drawStroke(context,stroke,stroke.points.length-1);}
       if(added&&stroke.mode==='lasso')renderInkSelection(stroke.points);
     };
     canvas.addEventListener('pointermove',sample,{passive:true});
@@ -665,6 +694,7 @@
   }
 
   function updateTransform() {
+    inkCanvasRect = null;
     $('#canvasWorld').style.transform = `translate(${state.view.x}px,${state.view.y}px) scale(${state.view.zoom})`;
     $('#zoomLabel').textContent = `${Math.round(state.view.zoom*100)}%`;
   }
@@ -724,9 +754,11 @@
       const end = () => { state.panning=false; viewport.classList.remove('panning'); viewport.removeEventListener('pointermove',move); viewport.removeEventListener('pointerup',end); viewport.removeEventListener('pointercancel',end); };
       viewport.addEventListener('pointermove',move); viewport.addEventListener('pointerup',end); viewport.addEventListener('pointercancel',end);
     });
+    let coordinateFrame=0,coordinatePoint=null;
     viewport.addEventListener('pointermove', event => {
-      const rect=viewport.getBoundingClientRect(), x=Math.round((event.clientX-rect.left-state.view.x)/state.view.zoom), y=Math.round((event.clientY-rect.top-state.view.y)/state.view.zoom);
-      $('#canvasCoordinates').textContent=`${x}, ${y}`;
+      coordinatePoint={x:event.clientX,y:event.clientY};
+      if(coordinateFrame)return;
+      coordinateFrame=requestAnimationFrame(()=>{coordinateFrame=0;if(!coordinatePoint)return;const rect=viewport.getBoundingClientRect();$('#canvasCoordinates').textContent=`${Math.round((coordinatePoint.x-rect.left-state.view.x)/state.view.zoom)}, ${Math.round((coordinatePoint.y-rect.top-state.view.y)/state.view.zoom)}`;});
     });
     viewport.addEventListener('click', event => { if (event.target === viewport || event.target === $('#canvasWorld')) clearSelection(); });
   }

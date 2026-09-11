@@ -319,6 +319,8 @@ body .app-shell.nav-collapsed.notes-collapsed,body .app-shell.focus-mode { grid-
 .idea-node { position:absolute;z-index:90;min-width:160px;min-height:52px;max-width:250px;display:flex;align-items:center;padding:13px 16px;border:1.5px solid color-mix(in srgb,var(--text) 28%,transparent);border-radius:7px;background:color-mix(in srgb,var(--fill-solid) 92%,var(--text) 8%);box-shadow:0 4px 14px rgba(15,20,28,.2);cursor:grab;user-select:none;touch-action:none; }
 .idea-node:hover { border-color: color-mix(in srgb,var(--text) 48%,transparent);box-shadow:0 6px 18px rgba(15,20,28,.25); }
 .idea-node.selected { z-index:91;border-color:var(--text-2);box-shadow:0 0 0 2px color-mix(in srgb,var(--fill-solid) 74%,transparent),0 0 0 4px color-mix(in srgb,var(--nav-accent) 70%,transparent),0 6px 18px rgba(15,20,28,.25); }
+.idea-node.dragging { cursor:grabbing; }
+.idea-node.group-dragging { border-color:color-mix(in srgb,var(--nav-accent) 55%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--nav-accent) 30%,transparent); }
 .idea-node.root { border-color:rgba(255,255,255,.68);background:linear-gradient(135deg,#075da8,#4c51b8);color:white;box-shadow:0 6px 20px rgba(8,52,104,.36); }
 .idea-node input { width:100%;border:0;outline:0;background:transparent;color:inherit;font:600 14px inherit;pointer-events:none;cursor:inherit; }.idea-node.editing input { pointer-events:auto;cursor:text;user-select:text; }
 .idea-node .node-tools { position:absolute;top:50%;right:-29px;display:none;flex-direction:column;gap:3px;transform:translateY(-50%); }

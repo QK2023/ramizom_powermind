@@ -23,9 +23,10 @@ If the File System Access API is unavailable, or the page is not served from HTT
 The manifest ships two icon families:
 
 - `icon.svg`, `icon-192.png`, and `icon-512.png` carry the rounded brand art and are declared `purpose: "any"`.
-- `icon-maskable-192.png` and `icon-maskable-512.png` carry the same rounded corners and are declared `purpose: "maskable"`, with the mark kept inside the 80% centre safe zone.
+- `icon-maskable-192.png` and `icon-maskable-512.png` keep the same rounded silhouette, are declared `purpose: "maskable"`, and scale the mark down so it stays inside the 80% centre safe zone.
+- `apple-touch-icon.png` (180 px) carries the same rounded silhouette. iOS cannot save notes and is not a supported target, so the file is only there for icon metadata completeness.
 
-Maskable art must never contain transparent pixels: launcher masks and the Chrome launch splash composite an icon's transparent corners onto an opaque backdrop, which shows up as black edges around the logo. The maskable tiles therefore keep the rounded corners but paint the area outside the tile with the manifest `background_color`, so the splash shows the familiar rounded logo on a matching background. **That corner colour must stay in sync with `background_color` in `manifest.webmanifest`** whenever the icon set is regenerated. `apple-touch-icon.png` (180 px) stays full-bleed and opaque because iOS applies its own mask.
+Every icon in the set keeps **transparent rounded corners**, so the brand silhouette reads as rounded on every surface: an OS or launcher mask crops the tile to its own shape, and an unmasked surface — desktop shortcut, taskbar, or the Chrome launch splash — shows whatever sits behind the corner instead of a hard edge. An earlier revision instead painted the corners with the manifest `background_color`; that only looked right when the surface behind the icon happened to be exactly that colour, and everywhere else it read as a light square tile with a rounded logo inside it, so the corners are clear again. The clear corners let the launch splash backdrop show through, which is why `background_color` stays at the warm light `#f5eee9`.
 
 ## Quality checks
 
