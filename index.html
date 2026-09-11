@@ -4,12 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5eee9">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="A visual note workspace for blocks, mind maps, and handwriting.">
   <meta name="application-name" content="Ramizom PowerMind">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Ramizom PowerMind">
   <title>Ramizom PowerMind</title>
   <link rel="icon" href="icon.svg?v=3" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
   <script>window.PM_SPLASH_STARTED=performance.now();</script>
@@ -24,6 +28,7 @@
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v5m4-5v5M9 7l1-3h4l1 3m-9 0 1 14h10l1-14"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 8a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z"/></symbol>
     <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM15 3v5h4M9 12h6M9 16h6"/></symbol>
+    <symbol id="i-rename" viewBox="0 0 24 24"><path d="m14.5 5.5 4 4M5 19l3.5-.8L19 7.7a2.8 2.8 0 0 0-4-4L4.5 14.2 4 20l5.8-.5"/></symbol>
     <symbol id="i-map" viewBox="0 0 24 24"><circle cx="5" cy="7" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 7h6m2.5-.5v10M7 8l10 9"/></symbol>
     <symbol id="i-pen" viewBox="0 0 24 24"><path d="m14.5 5.5 4 4M5 19l3.5-.8L19 7.7a2.8 2.8 0 0 0-4-4L4.5 14.2zM4 20h16"/></symbol>
     <symbol id="i-lasso" viewBox="0 0 24 24"><path d="M19.5 12.2c0 4.2-4 7.1-9.1 6.4-4.4-.6-7.2-3.5-6.4-7.3.9-4 5.3-6.5 9.8-5.5 3.7.8 6.1 3.3 5.7 6.4Z"/><path d="M12.5 18.7c1.5 2.2 3.8 2.2 4.8.8.5-.7.2-1.7-.8-1.8-1.6-.2-2.8 1.4-2.2 2.8"/></symbol>
@@ -50,6 +55,11 @@
     <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7z"/></symbol>
     <symbol id="i-sort" viewBox="0 0 24 24"><path d="M8 6h11M8 12h8M8 18h5M4 4v16"/></symbol>
     <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-eraser-stroke" viewBox="0 0 24 24"><path d="m4 15 8.5-10a2 2 0 0 1 3-.1l3.6 3.6a2 2 0 0 1-.1 3L12 18H7zM10 18h10M8 11l6 6"/></symbol>
+    <symbol id="i-eraser-pixel" viewBox="0 0 24 24"><path d="m4 15 8.5-10a2 2 0 0 1 3-.1l3.6 3.6a2 2 0 0 1-.1 3L12 18H7zM10 18h10"/><path d="M16 13h2m-1-1v2M20 10h1m-.5-.5v1"/></symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24"><path d="m3.5 15.5 12-12 5 5-12 12zM12 7l2 2m1-5 2 2M9 10l2 2m-5 1 2 2"/></symbol>
+    <symbol id="i-triangle" viewBox="0 0 24 24"><path d="M3 20 20 4v16zM9 16h6v-6z"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="m11 7-5 13m7-13 5 13M8 15h8M9 3h6"/></symbol>
   </defs></svg>
 
   <div class="startup-splash" id="startupSplash" role="status" aria-label="Ramizom PowerMind">
@@ -61,6 +71,19 @@
 
   <section class="folder-gate" id="folderGate" hidden>
     <div class="folder-gate-card"><div class="splash-mark"><svg><use href="#i-map"/></svg></div><div><h1>Ramizom PowerMind</h1><p data-i18n="folderGateBody">Choose a system folder before you begin. Your notes stay visible in File Explorer, and the folder can be reopened or moved like ordinary files.</p></div><button type="button" class="accent-button" id="chooseFolderGate"><svg><use href="#i-folder"/></svg><span data-i18n="chooseFolder">Choose folder</span></button></div>
+  </section>
+
+  <section class="folder-gate" id="unsupportedGate" hidden>
+    <div class="folder-gate-card platform-gate-card">
+      <div class="splash-mark"><svg><use href="#i-map"/></svg></div>
+      <div><h1 data-i18n="unsupportedTitle">This browser can’t save notes yet</h1><p id="unsupportedReason" data-i18n="unsupportedBody">Ramizom PowerMind keeps every note as an ordinary file inside a folder you choose, which needs the File System Access API.</p></div>
+      <div class="platform-support">
+        <strong data-i18n="unsupportedSupportedLabel">Use one of these</strong>
+        <ul><li data-i18n="unsupportedDesktop">Microsoft Edge 105 or later, or Google Chrome 105 or later (Windows, macOS, Linux)</li><li data-i18n="unsupportedAndroid">Google Chrome for Android 132 or later</li></ul>
+        <small data-i18n="unsupportedUnavailable">Firefox, Safari, Internet Explorer, and every browser on iOS or iPadOS cannot save notes yet.</small>
+      </div>
+      <label class="platform-language"><span data-i18n="language">Language</span><select id="unsupportedLanguage" autocomplete="off"></select></label>
+    </div>
   </section>
 
   <div class="mica-backdrop" aria-hidden="true"></div>
@@ -84,7 +107,7 @@
       </nav>
 
       <div class="section-label"><span data-i18n="workspace">WORKSPACE</span><button class="icon-button small" id="addWorkspace" data-i18n-aria="addWorkspace"><svg><use href="#i-add"/></svg></button></div>
-      <button class="workspace-picker" id="workspacePicker"><i id="workspaceColor"></i><span id="workspaceName">PowerMind</span><svg class="chevron"><use href="#i-chevron-down"/></svg></button>
+      <div class="workspace-picker-row"><button class="workspace-picker" id="workspacePicker"><i id="workspaceColor"></i><span id="workspaceName">PowerMind</span><svg class="chevron"><use href="#i-chevron-down"/></svg></button><button class="workspace-more overflow-button" id="workspaceMore" aria-label="More"><svg><use href="#i-more"/></svg></button></div>
       <div class="section-label folders-label"><span data-i18n="folders">FOLDERS</span><button class="icon-button small" id="addFolder" data-i18n-aria="addFolder"><svg><use href="#i-add"/></svg></button></div>
       <nav class="folder-list" id="folderList"></nav>
 
@@ -114,26 +137,28 @@
         <button class="icon-button" id="readingModeButton" data-i18n-aria="readingMode"><svg><use href="#i-eye"/></svg></button>
         <button class="icon-button" id="undoButton" title="Undo"><svg><use href="#i-undo"/></svg></button>
         <button class="icon-button" id="redoButton" title="Redo"><svg><use href="#i-redo"/></svg></button>
-        <button class="more-button command-more" id="noteMenuButton" aria-label="More">...</button>
+        <button class="more-button command-more overflow-button" id="noteMenuButton" aria-label="More"><svg><use href="#i-more"/></svg></button>
       </header>
 
-      <div class="canvas-toolbar" role="toolbar">
-        <div class="segmented" id="toolSelector">
+      <div class="canvas-toolbar" role="toolbar" aria-label="Editor ribbon">
+        <div class="ribbon-group ribbon-mode-group"><div class="segmented" id="toolSelector">
           <button class="tool-button active" data-tool="select" data-i18n-aria="select"><svg><use href="#i-pointer"/></svg><span data-i18n="select">Select</span></button>
           <button class="tool-button" data-tool="pan" data-i18n-aria="pan"><svg><use href="#i-hand"/></svg><span data-i18n="pan">Pan</span></button>
           <button class="tool-button" data-tool="ink" data-i18n-aria="ink"><svg><use href="#i-pen"/></svg><span data-i18n="ink">Ink</span></button>
-        </div>
-        <span class="toolbar-separator"></span>
+        </div><span class="ribbon-group-label" data-i18n="ribbonMode">Mode</span></div>
+        <div class="ribbon-group ribbon-insert-group">
         <button class="command-button" id="addEditor" data-i18n-aria="addEditor" title="Add block editor"><svg><use href="#i-note"/></svg><span data-i18n="addEditor">Block editor</span></button>
         <button class="command-button" id="addCard" title="Create a new mind map"><svg><use href="#i-mindmap-new"/></svg><span data-i18n="newMindMap">New map</span></button>
-        <button class="command-button" id="addIdea" data-i18n-aria="addIdea" title="Add a connected topic"><svg><use href="#i-topic-add"/></svg><span data-i18n="addIdea">Idea</span></button>
         <button class="command-button" id="layoutMindMap" data-i18n-aria="autoLayout" title="Arrange connected topics"><svg><use href="#i-layout"/></svg><span data-i18n="autoLayout">Auto layout</span></button>
         <button class="command-button formula-command" id="formulaButton" data-i18n-aria="formula"><strong>ƒx</strong><span data-i18n="formula">Formula</span></button>
-        <div class="ink-options" id="inkOptions">
+          <span class="ribbon-group-label" data-i18n="ribbonInsert">Insert</span>
+        </div>
+        <div class="ribbon-group ink-options" id="inkOptions">
           <div class="ink-mode-picker">
-            <button class="ink-mode selected" data-ink-mode="pen" data-i18n="pen">Pen</button>
-            <button class="ink-mode" data-ink-mode="highlighter" data-i18n="highlighter">Marker</button>
-            <button class="ink-mode" data-ink-mode="eraser" data-i18n="eraser">Eraser</button>
+            <button class="ink-mode selected" data-ink-mode="pen"><svg><use href="#i-pen"/></svg><span data-i18n="pen">Pen</span></button>
+            <button class="ink-mode" data-ink-mode="highlighter"><svg><use href="#i-pen"/></svg><span data-i18n="highlighter">Marker</span></button>
+            <button class="ink-mode" data-ink-mode="eraser-stroke"><svg><use href="#i-eraser-stroke"/></svg><span data-i18n="strokeEraser">Stroke eraser</span></button>
+            <button class="ink-mode" data-ink-mode="eraser-pixel"><svg><use href="#i-eraser-pixel"/></svg><span data-i18n="pixelEraser">Point eraser</span></button>
             <button class="ink-mode" data-ink-mode="lasso"><svg><use href="#i-lasso"/></svg><span data-i18n="lasso">Lasso</span></button>
           </div>
           <button class="color-chip selected" data-color="auto-contrast" style="--chip:var(--ink-auto-contrast)" data-i18n-aria="adaptiveBlack" aria-label="Adaptive black"></button>
@@ -145,22 +170,27 @@
           <button class="color-chip" data-color="#e68a17" style="--chip:#e68a17"></button>
           <label class="custom-color" title="Custom color"><input id="inkColorInput" type="color" value="#1267c4"><span></span></label>
           <input id="penSize" type="range" min="1" max="12" value="3" aria-label="Pen size">
+          <span class="ink-guide-picker"><button class="ink-guide-button" data-ink-guide="ruler"><svg><use href="#i-ruler"/></svg><span data-i18n="ruler">Ruler</span></button><button class="ink-guide-button" data-ink-guide="triangle"><svg><use href="#i-triangle"/></svg><span data-i18n="triangle">Triangle</span></button><button class="ink-guide-button" data-ink-guide="compass"><svg><use href="#i-compass"/></svg><span data-i18n="compass">Compass</span></button></span>
           <button class="subtle-button" id="clearInk" data-i18n="clearInk">Clear ink</button>
+          <span class="ribbon-group-label" data-i18n="ribbonDraw">Draw</span>
         </div>
-        <div class="zoom-control"><button id="zoomOut">−</button><span id="zoomLabel">100%</span><button id="zoomIn">+</button><button id="zoomReset" data-i18n="fit">Fit</button></div>
       </div>
 
       <div class="canvas-viewport" id="canvasViewport" tabindex="0">
         <div class="work-empty" id="workEmpty"><div class="empty-icon"><svg><use href="#i-note"/></svg></div><strong data-i18n="emptyTitle">Nothing here yet</strong><span data-i18n="emptyBody">Create a note to begin.</span><button class="accent-button" id="emptyNewNote"><svg><use href="#i-add"/></svg><span data-i18n="newNote">New note</span></button></div>
         <div class="canvas-world" id="canvasWorld">
           <svg class="connection-layer" id="connectionLayer"></svg>
+          <svg class="alignment-layer" id="alignmentLayer" aria-hidden="true"></svg>
           <canvas id="inkCanvas" width="4000" height="3000"></canvas>
           <canvas id="inkOverlay" width="4000" height="3000" aria-hidden="true"></canvas>
+          <div class="ink-guide" id="inkGuide" hidden><span class="guide-grip"></span></div>
           <div class="ink-selection-box" id="inkSelectionBox" hidden><div class="ink-selection-menu"><button type="button" data-ink-action="move" data-i18n-aria="moveInk"><svg><use href="#i-hand"/></svg></button><button type="button" data-ink-action="duplicate" data-i18n-aria="duplicate"><svg><use href="#i-copy"/></svg></button><button type="button" data-ink-action="front" data-i18n-aria="bringFront"><svg><use href="#i-front"/></svg></button><label data-i18n-aria="inkColor"><input id="selectedInkColor" type="color" value="#1267c4"><span></span></label><button type="button" data-ink-action="delete" data-i18n-aria="delete"><svg><use href="#i-trash"/></svg></button></div></div>
 <section class="document-card" id="documentCard"></section>
           <div class="idea-layer" id="ideaLayer"></div>
         </div>
         <div class="canvas-mode-badge" id="canvasModeBadge"></div>
+        <div class="ink-cursor" id="inkCursor" aria-hidden="true"></div>
+        <div class="canvas-zoom"><div class="zoom-control"><button id="zoomOut">−</button><span id="zoomLabel">100%</span><button id="zoomIn">+</button><button id="zoomReset" data-i18n="fit">Fit</button></div></div>
       </div>
       <footer class="statusbar"><span id="canvasCoordinates">0, 0</span><span id="blockCount">0 blocks</span><span>Ramizom PowerMind</span></footer>
     </section>
@@ -170,6 +200,7 @@
     <button data-action="favorite"><svg><use href="#i-star"/></svg><span data-i18n="favorite">Favorite</span></button>
     <button data-action="restore"><svg><use href="#i-undo"/></svg><span data-i18n="restore">Restore</span></button>
     <button data-action="duplicate"><svg><use href="#i-note"/></svg><span data-i18n="duplicate">Duplicate</span></button>
+    <button data-action="rename"><svg><use href="#i-rename"/></svg><span data-i18n="renameNote">Rename note</span></button>
     <button data-action="move"><svg><use href="#i-folder"/></svg><span data-i18n="move">Move to folder</span></button>
     <hr><button data-action="print"><svg><use href="#i-print"/></svg><span data-i18n="print">Print</span></button>
     <button data-action="pdf"><svg><use href="#i-export"/></svg><span data-i18n="exportPdf">Export PDF</span></button>
