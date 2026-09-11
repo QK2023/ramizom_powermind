@@ -4,14 +4,24 @@
 
 ### 已修复
 
-- **深色模式启动白闪（含桌面窗口标题栏）**：`init()` 在 `applyTheme()` 之前先 `await` 了 Service Worker 查询、`caches.keys()` 和 `storage.restore()`，因此首帧一定是浅色，约 80ms 后才变深色。实测时间线：同一时刻 `body` 无主题类、`meta[theme-color]` 为浅色 `#f5eee9`。现在 `<body>` 起始处有一段同步脚本，在首次绘制前就写入主题类、`data-accent`、`--system-chrome-color`、`--body-font-size`、`color-scheme`、`<html>` 背景色与 `theme-color`/状态栏元数据。
+- **深色模式启动白闪（含桌面窗口标题栏与移动状态栏）**：`init()` 在 `applyTheme()` 之前先 `await` 了 Service Worker 查询、`caches.keys()` 和 `storage.restore()`，因此首帧一定是浅色（实测同一时刻 `body` 无主题类、`meta[theme-color]` 为浅色 `#f5eee9`）。仅把主题脚本放在 `<body>` 起始处仍不够——`<html>` 的 `color-scheme`／背景色与浏览器窗口底色发生在更早的时刻。现改为**在 `<head>` 解析期间**完成主题解析：写入 `<html>` 的 `color-scheme`／背景色／`--system-chrome-color`／`--body-font-size` 并折叠 `theme-color` 元数据；`<body>` 起始处的一行脚本再补 `theme-dark`/`theme-light` 与 `data-accent`。同时把静态 `theme-color` 改为两条带 `media="(prefers-color-scheme: …)"` 的声明，使浏览器在**任何脚本执行之前**就拿到符合系统深浅的窗口/状态栏颜色。
+- **移动端每次都要求重新选择文件夹**：笔记写在用户自选文件夹里，但"记住的文件夹句柄"存于 IndexedDB，原实现有两个真实缺陷：① `rememberHandle()` 在 `request.onsuccess` 就返回，未等待事务 `oncomplete`，页面被挂起或杀掉时这次写入可能丢失；② `rememberHandle()` 一旦抛错会中断整个 `connectDataFolder()`，导致后续保存与界面更新被跳过。现改为等待事务提交（新增 `finishStore()`）、写入失败只告警不中断，并在连接文件夹与启动时调用 `navigator.storage.persist()`，避免浏览器在存储压力下清理 IndexedDB 而丢失句柄。
+- **`--system-chrome-color` 双写不一致**：启动脚本写在 `<html>`，而 `updateSystemChrome()` 写在 `<body>`，切换主题色后根元素上会残留旧值。现统一写在 `<html>`。
+- **安装后需要卸载重装才能更新**：此前应用不注册 Service Worker，更新只能依赖 HTTP 缓存（本项目的测试过程中就多次被 304/启发式缓存挡住，必须绕过缓存才能看到新文件）。现新增 `sw.js`：缓存应用外壳但**一律 network-first**，在线时每次启动都向服务器重新校验，缓存只在断网时兜底；`skipWaiting()` + `clients.claim()` 让新 worker 立即接管，因此重新打开应用即可拿到新版本，无需卸载、无需清缓存、也不会被钉在旧版本上。`manifest.webmanifest` 与所有图标**刻意不经过 worker**，因为 Chrome 会在后台重新读取它们来刷新已安装应用，缓存住会把名称、配色与启动图钉死。
+- **Chrome 启动过渡页的 logo 是直角**：maskable 图标此前是全出血方形，Chrome 启动页不做遮罩，因此显示直角。现在 maskable 图标保留品牌圆角（与 `icon.svg`、应用内 logo 一致的 28/128），并把圆角之外的部分填充为清单的 `background_color`（`#f5eee9`）——既不会出现透明角合成黑边，启动页又是熟悉的圆角。**该填充色必须与 `manifest.webmanifest` 的 `background_color` 保持同步。**
 - **移动端无法直接进入主页**：竖屏启动时强制 `state.mobileStage='workspace'`，用户先看到导航抽屉。现在改为有笔记时直接进入编辑器、无笔记时进入笔记列表，旋转屏幕时同样处理。
 - **移动端设置窗口内所有下拉框被压成 10px**：`@media (max-width:430px)` 里的 `.fluent-options` 覆盖写在前、基础规则写在后，同权重下后者胜出，于是 `position/top/left/right/max-height` 被基础规则接管，但 `bottom:16px` 残留。面板因此被拉伸约束成"内容高度为 0"（仅剩 4px padding + 1px 边框 = 10px），四个下拉框全部只显示一条细缝。现已删除该失效覆盖，并让基础规则自带 `bottom:auto`，避免任何内联 `inset` 再次泄漏。
 - **下拉项文字在窄屏横向溢出**：`.fluent-options button span` 只有 `flex:1`，缺少 `min-width:0`，窄屏时会撑出横向滚动条。现与 `.fluent-select span` 一致，改为 `min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap`。
 
 ### 本次已验证
 
-- **首帧主题**（系统浅色 + 已存深色/蓝色主题，探针记录两个 `requestAnimationFrame` 与多个超时点）：DOMContentLoaded 同一时刻 `body.class="theme-dark"`、`data-accent="blue"`、`meta[theme-color]="#202a33"`、`html` 背景与 `color-scheme` 均已就位；修复前该时刻为无主题类、`meta="#f5eee9"`。
+- **首帧主题**（系统浅色 + 已存深色/蓝色主题）：`<head>` 脚本执行后文档中只剩 1 条 `meta[theme-color]`（`media` 已移除、内容 `#202a33`）；`<body>` 起始处即为 `theme-dark`、`data-accent="blue"`，`<html>` 的 `color-scheme`／背景色／`--system-chrome-color` 同步。
+- **实际合成帧**（CDP `Page.startScreencast` 自 reload 起连续采集）：61 帧**全部为深色**（平均亮度 45–46，最亮 46），不存在白色帧。
+- **记住的文件夹**：向真实 IndexedDB 写入一个可结构化克隆的句柄替身并重新加载后，门禁按钮正确显示为"打开已保存的文件夹"而非"选择文件夹"，恢复路径生效。`navigator.storage.persist` 存在，当前 `persisted()` 为 `false`，配额约 3.0 GB。
+- **主题色动态切换**：主题色改为青色后 `meta[theme-color]` 变为 `#202e2d`（深色）且仍只有 1 条；主题切为浅色后变为 `#e3f1ef`，即跟随**用户选择**而非系统深浅。
+- 全程未捕获到 console error / pageerror / requestfailed（未连接文件夹时的 "Choose a system folder" 提示为预期行为）。
+- **离线外壳与无感更新**（真实浏览器，HTTP 缓存保持开启，即普通用户状态）：`sw.js` 注册成功并接管（`scope` 为站点根、`controller` 存在），缓存中只有 `index.html`/`style.css`/`app.js`/`i18n.js`，**manifest 与图标均未被缓存**。往 `style.css` 末尾追加一条探针规则后**普通刷新**即可在页面中读到（`--pm-probe:1` 生效、样式表内可见），删除后再次刷新探针消失——无需清缓存或重装。停掉静态服务器后再次刷新，应用仍完整渲染（标题、外壳、样式、1 篇笔记、1 个编辑器），0 console error。
+- **maskable 图标**：`icon-maskable-192.png` 与 `icon-maskable-512.png` 透明像素数为 **0**，四角实测为 `#f5eee9`（与清单 `background_color` 一致），中心为白色节点图形；`icon-512.png`（`any`）保留 11188 个透明圆角像素，`apple-touch-icon.png` 保持全出血。
 - **移动端启动**（390×844 竖屏）：`data-mobile-stage="editor"`，工作区 `x=0`，导航与笔记层 `x=-410` 且均 `inert`，编辑器卡片宽 348px，正文字号 18px。
 - **移动端三页流**：编辑器 → 返回笔记列表（`stage="notes"`，笔记层 `x=0`）→ 新建笔记（回到 `stage="editor"`，2 篇笔记）→ 输入文字成功。
 - **设置下拉框**：390px 宽下 accent 面板 `clientWidth 192 / scrollWidth 192`、`clientHeight 246 / scrollHeight 246`，7 项全部可见、无横向溢出、标签不截断；320px 宽下无横向溢出，标签按省略号优雅收缩（修复前 `scrollWidth > clientWidth` 会出现横向滚动条与换行）。
@@ -21,6 +31,11 @@
 
 ### 仍需专项验证
 
+- **移动端文件夹句柄能否真正自动恢复无法在本机验证**：桌面 Chromium 只需一次点击即可重新授权；Android Chrome 对 SAF 目录的重新授权可能仍会拉起系统文件夹选择器，而这正是"每次都要选文件夹"的观感来源。`persist()` 在本机返回 `false`（Chrome 按站点参与度决定），真机是否授予需实测。
+- **安装态 PWA 的启动画面底色仍为静态**：清单里的 `background_color: #f5eee9`（浅米色）同时用于 Android 启动画面、PWA 窗口初始底色，**以及 maskable 图标的圆角填充**。因此改动这个值必须同时重新生成图标，否则启动页会露出一圈异色方角。它无法跟随用户主题，浅色与深色用户中必有一方看到不匹配的闪底，属平台限制。
+- **已安装应用的后台刷新需真机确认**：Chrome 会在后台重新读取清单与图标来更新已安装应用（WebAPK），因此理论上无需卸载重装；但刷新时机由浏览器决定，实际延迟需在 Android 上验证，桌面快捷方式图标缓存同理。
+- **主屏幕图标观感需真机确认**：maskable 图标的圆角现位于画布边缘；若 Android 遮罩按预期裁掉外围区域，主屏幕图标与改动前一致，否则会看到圆角外一圈浅色底板（视觉上仍成立，但属于变化）。
+- **Service Worker 为新增组件**：需在真机上确认首次安装、后台更新与断网启动三条路径，并确认旧版遗留缓存被 `activate` 清理。
 - **本轮未执行 `node tests/regression.cjs`**（开发机无 Node.js）。新增断言已通过静态字符串核对，上线前必须在有 Node 的机器上完整跑一遍。
 - **真机确认**：上述数据来自桌面 Chromium 的窄视口，不等同于触屏设备。需在真实 Android Chrome 上确认状态栏颜色、启动进入的页面层级，以及 `(pointer: coarse)` 相关样式。
 - **已安装 PWA 的启动状态栏无法跟随主题色**：安装态下 OS 启动画面与初始状态栏取自清单里静态的 `theme_color`/`background_color`（`#f5eee9`），用户选择的主题色只能从页面首帧起生效。如需彻底一致，只能让清单使用中性底色，属产品取舍。

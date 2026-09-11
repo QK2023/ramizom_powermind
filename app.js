@@ -102,8 +102,12 @@
     openHandleStore(mode='readonly') {
       return new Promise((resolve,reject)=>{if(!window.indexedDB)return reject(new Error('IndexedDB unavailable'));const request=indexedDB.open(this.handleDb,1);request.onupgradeneeded=()=>request.result.createObjectStore('handles');request.onerror=()=>reject(request.error);request.onsuccess=()=>resolve(request.result.transaction('handles',mode).objectStore('handles'));});
     },
-    async rememberHandle(handle){const store=await this.openHandleStore('readwrite');await new Promise((resolve,reject)=>{const request=store.put(handle,'workspace-directory');request.onsuccess=resolve;request.onerror=()=>reject(request.error);});},
-    async forgetHandle(){try{const store=await this.openHandleStore('readwrite');await new Promise((resolve,reject)=>{const request=store.delete('workspace-directory');request.onsuccess=resolve;request.onerror=()=>reject(request.error);});}catch{}},
+    async rememberHandle(handle){const store=await this.openHandleStore('readwrite');await this.finishStore(store,'Remember the folder');store.put(handle,'workspace-directory');},
+    async forgetHandle(){try{const store=await this.openHandleStore('readwrite');await this.finishStore(store,'Forget the folder');store.delete('workspace-directory');}catch{}},
+    // Resolves only once the IndexedDB transaction has actually committed. Chrome can drop a
+    // still-pending transaction when a page is suspended or killed, which on mobile showed up
+    // as "I have to choose my folder again every time".
+    finishStore(store,label){const transaction=store.transaction;return new Promise((resolve,reject)=>{const fail=()=>reject(transaction.error||new Error(label));transaction.oncomplete=()=>{try{transaction.db.close();}catch{/* already closing */}resolve();};transaction.onabort=fail;transaction.onerror=fail;});},
     async recalledHandle(){try{const store=await this.openHandleStore();return await new Promise((resolve,reject)=>{const request=store.get('workspace-directory');request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error);});}catch{return null;}},
     async writeJson(directory,name,value){const file=await directory.getFileHandle(name,{create:true}),writer=await file.createWritable();await writer.write(JSON.stringify(value,null,2));await writer.close();},
     async readJson(directory,name){const handle=await directory.getFileHandle(name),file=await handle.getFile(),parsed=this.parse(await file.text());if(!parsed)throw new Error(`${name} is not valid JSON`);return parsed;},
@@ -828,13 +832,26 @@
   }
 
   function updateStorageLabel(){const status=$('#folderStorageStatus'),button=$('#openDataFolder'),close=$('#closeDataFolder'),save=$('#saveState span'),gate=$('#folderGate'),gateButton=$('#chooseFolderGate span');if(status)status.textContent=state.directoryHandle?state.directoryName:t('folderRequired');if(button)button.textContent=t(state.directoryHandle?'changeFolder':'chooseFolder');if(close)close.hidden=!state.directoryHandle;if(save&&!state.directoryHandle)save.textContent=t('chooseFolder');if(gateButton)gateButton.textContent=state.recalledDirectoryHandle&&!state.directoryHandle?t('reopenFolder'):t('chooseFolder');if(gate)gate.hidden=Boolean(state.directoryHandle);}
+  // Installs the offline shell. The worker answers everything network-first, so simply
+  // reopening an installed app is enough to pick up a new release: no uninstall, no manual
+  // cache clearing, and no risk of being pinned to an older build.
+  function startServiceWorker(){
+    if(!('serviceWorker' in navigator))return;
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(error=>console.warn('PowerMind could not start the offline shell',error));
+  }
+  // The notes live in the user's own folder, but the handle used to reopen that folder is
+  // kept in IndexedDB. Asking for persistent storage stops the browser from evicting it,
+  // which otherwise shows up as "I have to choose my folder again every time".
+  async function requestPersistentStorage(){
+    try{if(navigator.storage?.persist&&!(await navigator.storage.persisted()))await navigator.storage.persist();}catch(error){/* Only affects eviction; safe to ignore. */}
+  }
   async function connectDataFolder(){
     if(!window.showDirectoryPicker){toast(t('directFolderUnsupported'));return;}
     try{
       const directory=await showDirectoryPicker({mode:'readwrite'});if(await directory.requestPermission?.({mode:'readwrite'})!=='granted')return;
       let existing=null,hasManifest=true;try{await directory.getFileHandle(storage.manifest);}catch(error){if(error?.name==='NotFoundError'||/not found|could not be found|does not exist/i.test(String(error?.message||error)))hasManifest=false;else throw error;}if(hasManifest)existing=await storage.loadDirectory(directory);
       const switching=state.directoryHandle?!(await state.directoryHandle.isSameEntry?.(directory)):state.legacyData;if(existing&&switching&&!confirm(t('openExistingFolder')))return;
-      state.directoryHandle=directory;state.directoryName=directory.name;await storage.rememberHandle(directory);
+      state.directoryHandle=directory;state.directoryName=directory.name;try{await storage.rememberHandle(directory);}catch(error){console.warn('PowerMind could not remember the folder',error);}requestPersistentStorage();
       state.recalledDirectoryHandle=null;state.recalledDirectoryName='';
       if(existing){state.db=migrateDatabase(existing);state.workspaceId=state.db.workspaces[0]?.id;state.noteId=state.db.notes.find(note=>note.workspaceId===state.workspaceId&&!note.trashed)?.id||null;state.history=[];state.future=[];renderAll();}
       else await scheduleSave(true);
@@ -917,7 +934,7 @@
 
   function updateSystemChrome(){
     const dark=document.body.classList.contains('theme-dark'),accent=document.body.dataset.accent||localStorage.getItem('pm.accent')||'red',lightColors={red:'#f5e8e5',orange:'#f6ebe1',yellow:'#f5eedb',green:'#e7f1e7',teal:'#e3f1ef',blue:'#e6eef7',purple:'#eee8f5'},darkColors={red:'#302426',orange:'#302822',yellow:'#302d22',green:'#222e25',teal:'#202e2d',blue:'#202a33',purple:'#292530'},color=(dark?darkColors:lightColors)[accent]||(dark?'#25282b':'#f5eee9');
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content',color);document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content',dark?'black-translucent':'default');document.documentElement.style.backgroundColor=color;document.documentElement.style.colorScheme=dark?'dark':'light';document.body.style.setProperty('--system-chrome-color',color);
+    $$('meta[name="theme-color"]').forEach((meta,index)=>{if(index)meta.remove();else{meta.removeAttribute('media');meta.setAttribute('content',color);}});document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content',dark?'black-translucent':'default');document.documentElement.style.backgroundColor=color;document.documentElement.style.colorScheme=dark?'dark':'light';document.documentElement.style.setProperty('--system-chrome-color',color);
   }
   function applyTheme(theme=localStorage.getItem('pm.theme')||'system'){
     const dark=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.body.classList.toggle('theme-dark',dark);document.body.classList.toggle('theme-light',!dark);localStorage.setItem('pm.theme',theme);updatePicker('theme',theme);updateSystemChrome();if(state.db&&activeNote())renderInk();
@@ -1084,14 +1101,13 @@
 
   async function init() {
     try{localStorage.removeItem('pm.wallpaper');}catch{/* Remove the retired setting when storage is available. */}
-    if('serviceWorker' in navigator){const registration=await navigator.serviceWorker.getRegistration().catch(()=>null);await registration?.unregister();}
-    if('caches' in window){const cacheNames=await caches.keys().catch(()=>[]);await Promise.all(cacheNames.filter(name=>name.startsWith('powermind-shell-')).map(name=>caches.delete(name)));}
     state.db=migrateDatabase(await storage.restore());
     state.workspaceId=state.db.workspaces[0]?.id;
     state.noteId=state.db.notes.find(note=>note.workspaceId===state.workspaceId&&!note.trashed)?.id||null;
     applyTheme();applyAccent();applyBodyFontSize();
     if(!storageSupported()){showUnsupportedGate();dismissStartupSplash();return;}
-    applyTranslations();applyPaneLayout();bindEvents();setupCanvasNavigation();setupInk();setupInkCursor();setupInkGuides();setupInkSelectionUI();updateTransform();renderAll();state.mobileStage=isPortraitMobile()?(activeNote()?'editor':'notes'):'editor';syncMobileHierarchy();dismissStartupSplash();updateStorageLabel();
+    requestPersistentStorage();
+    applyTranslations();applyPaneLayout();bindEvents();setupCanvasNavigation();setupInk();setupInkCursor();setupInkGuides();setupInkSelectionUI();updateTransform();renderAll();state.mobileStage=isPortraitMobile()?(activeNote()?'editor':'notes'):'editor';syncMobileHierarchy();dismissStartupSplash();updateStorageLabel();startServiceWorker();
   }
 
   init().catch(error=>{dismissStartupSplash();console.error(error);toast(`PowerMind could not start: ${error.message}`);});

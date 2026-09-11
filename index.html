@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5eee9">
+  <meta name="theme-color" content="#f5e8e5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#302426" media="(prefers-color-scheme: dark)">
   <meta name="color-scheme" content="light dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,16 +17,15 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
-  <script>window.PM_SPLASH_STARTED=performance.now();</script>
-</head>
-<body>
   <script>
-  // The full app boots asynchronously, so the saved theme, accent and chrome colour are
-  // applied here, before the first paint. Without this the window title bar, the mobile
-  // status bar and the splash all flash the light default before the dark theme lands.
+  window.PM_SPLASH_STARTED=performance.now();
+  // The app itself boots asynchronously, so the saved theme is resolved here, while the head
+  // is still being parsed. This is the earliest point the page can influence the canvas
+  // colour, the window title bar and the mobile status bar, so the first frame is already
+  // dark instead of light. The body classes are applied as soon as <body> opens, using the
+  // values handed over in PM_BOOT.
   (function(){
-    var root=document.documentElement,body=document.body;
-    var dark=false,accent='red',fontSize=16;
+    var root=document.documentElement,dark=false,accent='red',fontSize=16;
     try{
       var theme=localStorage.getItem('pm.theme')||'system';
       dark=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
@@ -36,18 +36,21 @@
     var lightColors={red:'#f5e8e5',orange:'#f6ebe1',yellow:'#f5eedb',green:'#e7f1e7',teal:'#e3f1ef',blue:'#e6eef7',purple:'#eee8f5'};
     var darkColors={red:'#302426',orange:'#302822',yellow:'#302d22',green:'#222e25',teal:'#202e2d',blue:'#202a33',purple:'#292530'};
     var color=(dark?darkColors:lightColors)[accent]||(dark?'#25282b':'#f5eee9');
-    body.classList.add(dark?'theme-dark':'theme-light');
-    body.dataset.accent=accent;
+    var metas=document.querySelectorAll('meta[name="theme-color"]');
+    for(var index=1;index<metas.length;index++)metas[index].remove();
+    if(metas[0]){metas[0].removeAttribute('media');metas[0].setAttribute('content',color);}
     root.style.setProperty('--system-chrome-color',color);
     root.style.setProperty('--body-font-size',fontSize+'px');
     root.style.colorScheme=dark?'dark':'light';
     root.style.backgroundColor=color;
-    var themeMeta=document.querySelector('meta[name="theme-color"]');
-    if(themeMeta)themeMeta.setAttribute('content',color);
     var statusMeta=document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if(statusMeta)statusMeta.setAttribute('content',dark?'black-translucent':'default');
+    window.PM_BOOT={dark:dark,accent:accent};
   })();
   </script>
+</head>
+<body>
+  <script>(function(){var boot=window.PM_BOOT;if(!boot)return;document.body.classList.add(boot.dark?'theme-dark':'theme-light');document.body.dataset.accent=boot.accent;})();</script>
   <svg class="icon-sprite" aria-hidden="true"><defs>
     <symbol id="i-add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
