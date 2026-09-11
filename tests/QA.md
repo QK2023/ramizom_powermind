@@ -1,5 +1,33 @@
 # Ramizom PowerMind 回归记录
 
+## 2026-09-12 — 移动端与主题启动修正
+
+### 已修复
+
+- **深色模式启动白闪（含桌面窗口标题栏）**：`init()` 在 `applyTheme()` 之前先 `await` 了 Service Worker 查询、`caches.keys()` 和 `storage.restore()`，因此首帧一定是浅色，约 80ms 后才变深色。实测时间线：同一时刻 `body` 无主题类、`meta[theme-color]` 为浅色 `#f5eee9`。现在 `<body>` 起始处有一段同步脚本，在首次绘制前就写入主题类、`data-accent`、`--system-chrome-color`、`--body-font-size`、`color-scheme`、`<html>` 背景色与 `theme-color`/状态栏元数据。
+- **移动端无法直接进入主页**：竖屏启动时强制 `state.mobileStage='workspace'`，用户先看到导航抽屉。现在改为有笔记时直接进入编辑器、无笔记时进入笔记列表，旋转屏幕时同样处理。
+- **移动端设置窗口内所有下拉框被压成 10px**：`@media (max-width:430px)` 里的 `.fluent-options` 覆盖写在前、基础规则写在后，同权重下后者胜出，于是 `position/top/left/right/max-height` 被基础规则接管，但 `bottom:16px` 残留。面板因此被拉伸约束成"内容高度为 0"（仅剩 4px padding + 1px 边框 = 10px），四个下拉框全部只显示一条细缝。现已删除该失效覆盖，并让基础规则自带 `bottom:auto`，避免任何内联 `inset` 再次泄漏。
+- **下拉项文字在窄屏横向溢出**：`.fluent-options button span` 只有 `flex:1`，缺少 `min-width:0`，窄屏时会撑出横向滚动条。现与 `.fluent-select span` 一致，改为 `min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap`。
+
+### 本次已验证
+
+- **首帧主题**（系统浅色 + 已存深色/蓝色主题，探针记录两个 `requestAnimationFrame` 与多个超时点）：DOMContentLoaded 同一时刻 `body.class="theme-dark"`、`data-accent="blue"`、`meta[theme-color]="#202a33"`、`html` 背景与 `color-scheme` 均已就位；修复前该时刻为无主题类、`meta="#f5eee9"`。
+- **移动端启动**（390×844 竖屏）：`data-mobile-stage="editor"`，工作区 `x=0`，导航与笔记层 `x=-410` 且均 `inert`，编辑器卡片宽 348px，正文字号 18px。
+- **移动端三页流**：编辑器 → 返回笔记列表（`stage="notes"`，笔记层 `x=0`）→ 新建笔记（回到 `stage="editor"`，2 篇笔记）→ 输入文字成功。
+- **设置下拉框**：390px 宽下 accent 面板 `clientWidth 192 / scrollWidth 192`、`clientHeight 246 / scrollHeight 246`，7 项全部可见、无横向溢出、标签不截断；320px 宽下无横向溢出，标签按省略号优雅收缩（修复前 `scrollWidth > clientWidth` 会出现横向滚动条与换行）。
+- **桌面端未受影响**（1280×800）：无 `data-mobile-stage`，导航层可见、三层面板均非 `inert`，编辑器与笔记正常渲染，设置下拉框正常，0 console error。
+- **运行期主题色**：在设置中切换主题色后 `meta[theme-color]` 与 `--system-chrome-color` 立即跟随（蓝 `#202a33` → 绿 `#222e25` → 黄 `#302d22`）。
+- 全程未捕获到 console error / pageerror / requestfailed（未连接文件夹时出现的 "Choose a system folder" 提示为预期行为）。
+
+### 仍需专项验证
+
+- **本轮未执行 `node tests/regression.cjs`**（开发机无 Node.js）。新增断言已通过静态字符串核对，上线前必须在有 Node 的机器上完整跑一遍。
+- **真机确认**：上述数据来自桌面 Chromium 的窄视口，不等同于触屏设备。需在真实 Android Chrome 上确认状态栏颜色、启动进入的页面层级，以及 `(pointer: coarse)` 相关样式。
+- **已安装 PWA 的启动状态栏无法跟随主题色**：安装态下 OS 启动画面与初始状态栏取自清单里静态的 `theme_color`/`background_color`（`#f5eee9`），用户选择的主题色只能从页面首帧起生效。如需彻底一致，只能让清单使用中性底色，属产品取舍。
+- 另注：`updateSystemChrome()` 中浅色系的红色为 `#f5e8e5`，而静态 `meta` 与清单为 `#f5eee9`，二者略有差异（首帧前不可见）。本轮未改动，必要时可统一。
+
+可选的后续改进（未实施）：把设置行在窄屏改为标签在上、控件在下的单列布局（原 `@media (max-width:430px)` 的意图），可让控件与下拉面板获得整行宽度。
+
 ## 2026-09-11 — 上线前检查
 
 ### 已修复

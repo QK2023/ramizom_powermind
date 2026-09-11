@@ -19,6 +19,35 @@
   <script>window.PM_SPLASH_STARTED=performance.now();</script>
 </head>
 <body>
+  <script>
+  // The full app boots asynchronously, so the saved theme, accent and chrome colour are
+  // applied here, before the first paint. Without this the window title bar, the mobile
+  // status bar and the splash all flash the light default before the dark theme lands.
+  (function(){
+    var root=document.documentElement,body=document.body;
+    var dark=false,accent='red',fontSize=16;
+    try{
+      var theme=localStorage.getItem('pm.theme')||'system';
+      dark=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
+      var storedAccent=localStorage.getItem('pm.accent');
+      if(['red','orange','yellow','green','teal','blue','purple'].indexOf(storedAccent)>=0)accent=storedAccent;
+      fontSize=Math.min(22,Math.max(14,Number(localStorage.getItem('pm.bodyFontSize'))||16));
+    }catch(error){ dark=matchMedia('(prefers-color-scheme: dark)').matches; }
+    var lightColors={red:'#f5e8e5',orange:'#f6ebe1',yellow:'#f5eedb',green:'#e7f1e7',teal:'#e3f1ef',blue:'#e6eef7',purple:'#eee8f5'};
+    var darkColors={red:'#302426',orange:'#302822',yellow:'#302d22',green:'#222e25',teal:'#202e2d',blue:'#202a33',purple:'#292530'};
+    var color=(dark?darkColors:lightColors)[accent]||(dark?'#25282b':'#f5eee9');
+    body.classList.add(dark?'theme-dark':'theme-light');
+    body.dataset.accent=accent;
+    root.style.setProperty('--system-chrome-color',color);
+    root.style.setProperty('--body-font-size',fontSize+'px');
+    root.style.colorScheme=dark?'dark':'light';
+    root.style.backgroundColor=color;
+    var themeMeta=document.querySelector('meta[name="theme-color"]');
+    if(themeMeta)themeMeta.setAttribute('content',color);
+    var statusMeta=document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if(statusMeta)statusMeta.setAttribute('content',dark?'black-translucent':'default');
+  })();
+  </script>
   <svg class="icon-sprite" aria-hidden="true"><defs>
     <symbol id="i-add" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>

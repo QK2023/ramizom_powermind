@@ -196,7 +196,9 @@ body .app-shell.nav-collapsed.notes-collapsed,body .app-shell.focus-mode { grid-
 .focus-button { flex:0 0 auto; }
 @media (pointer:coarse){.folder-item .folder-more,.note-card .note-more{opacity:1;min-width:32px;min-height:32px;}}
 @media (pointer:coarse){.idea-node .node-tools{display:flex;right:-34px}.idea-node .node-tools button{width:28px;height:28px}}
-@media (max-width:430px){.settings-dialog label,.settings-dialog .setting-row{grid-template-columns:1fr;gap:5px}.fluent-options{position:fixed;left:16px;right:16px;top:auto;bottom:16px;max-height:50dvh}}
+/* The narrow-screen picker overrides that lived here were shadowed by the later
+   .fluent-options rule, but their leftover `bottom` still applied and collapsed every
+   settings dropdown to a 10px sliver. The base rule below is now self-contained. */
 .top-commandbar { height: 50px; display: flex; align-items: center; gap: 3px; padding: 0 14px 0 18px; border-bottom: 1px solid var(--stroke); background: rgba(255,255,255,.28); }
 .work-notes-button { display: none; margin-right: 5px; }
 .breadcrumb { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-size: 12px; }
@@ -373,12 +375,12 @@ button:focus-visible,input:focus-visible,[contenteditable]:focus-visible { outli
 .fluent-select span { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .select-chevron { width:16px;height:16px;flex:0 0 auto;color:var(--text-3);transition:transform .15s; }
 .fluent-select[aria-expanded="true"] .select-chevron { transform:rotate(180deg); }
-.fluent-options { position:absolute;z-index:220;top:38px;left:0;right:0;display:none;max-height:220px;overflow:auto;padding:4px;border:1px solid var(--stroke);border-radius:7px;background:var(--fill-solid);box-shadow:var(--shadow-8); }
+.fluent-options { position:absolute;z-index:220;top:38px;bottom:auto;left:0;right:0;display:none;max-height:220px;overflow:auto;padding:4px;border:1px solid var(--stroke);border-radius:7px;background:var(--fill-solid);box-shadow:var(--shadow-8); }
 .accent-options { max-height:260px; }
 .fluent-options.open { display:block;animation:menu-in .14s var(--ease); }
 .fluent-options button { width:100%;min-height:34px;display:flex;align-items:center;gap:9px;padding:5px 9px;border:0;border-radius:4px;background:transparent;color:var(--text);cursor:pointer;text-align:left; }
 .fluent-options button:hover,.fluent-options button:focus-visible { background:var(--fill-hover);outline:0; }
-.fluent-options button span { flex:1; }
+.fluent-options button span { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .fluent-options button svg { width:15px;opacity:0; }
 .fluent-options button.selected { background:var(--fill-active); }
 .fluent-options button.selected svg { opacity:1;color:var(--nav-accent); }

@@ -1050,9 +1050,9 @@
     });
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(!state.printing&&(localStorage.getItem('pm.theme')||'system')==='system')applyTheme('system');});
     addEventListener('beforeprint',()=>{if(activeNote())preparePrintSheet();});
-    matchMedia('(max-width: 800px) and (orientation: portrait)').addEventListener('change',event=>{state.mobileStage=event.matches?'workspace':'editor';syncMobileHierarchy();});
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingSave();});
     addEventListener('pagehide',flushPendingSave);
+    matchMedia('(max-width: 800px) and (orientation: portrait)').addEventListener('change',event=>{state.mobileStage=event.matches?(activeNote()?'editor':'notes'):'editor';syncMobileHierarchy();});
   }
 
   function renderAll(){
@@ -1091,7 +1091,7 @@
     state.noteId=state.db.notes.find(note=>note.workspaceId===state.workspaceId&&!note.trashed)?.id||null;
     applyTheme();applyAccent();applyBodyFontSize();
     if(!storageSupported()){showUnsupportedGate();dismissStartupSplash();return;}
-    applyTranslations();applyPaneLayout();bindEvents();setupCanvasNavigation();setupInk();setupInkCursor();setupInkGuides();setupInkSelectionUI();updateTransform();renderAll();state.mobileStage=isPortraitMobile()?'workspace':'editor';syncMobileHierarchy();dismissStartupSplash();updateStorageLabel();
+    applyTranslations();applyPaneLayout();bindEvents();setupCanvasNavigation();setupInk();setupInkCursor();setupInkGuides();setupInkSelectionUI();updateTransform();renderAll();state.mobileStage=isPortraitMobile()?(activeNote()?'editor':'notes'):'editor';syncMobileHierarchy();dismissStartupSplash();updateStorageLabel();
   }
 
   init().catch(error=>{dismissStartupSplash();console.error(error);toast(`PowerMind could not start: ${error.message}`);});
