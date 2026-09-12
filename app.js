@@ -26,6 +26,7 @@
     drawing: false,
     inkSelection: new Set(),
     inkGuide: null,
+    guideSnap: null,
     panning: false,
     history: [],
     future: [],
@@ -680,8 +681,15 @@
     const rotation=(guide.angle||0)*Math.PI/180,cx=guide.x+(guide.type==='ruler'?2600:guide.type==='triangle'?150:140),cy=guide.y+(guide.type==='ruler'?34:guide.type==='triangle'?105:140),cos=Math.cos(rotation),sin=Math.sin(rotation),dx=next.x-cx,dy=next.y-cy,local={x:dx*cos+dy*sin,y:-dx*sin+dy*cos};
     const world=point=>({...next,x:cx+point.x*cos-point.y*sin,y:cy+point.x*sin+point.y*cos});
     if(guide.type==='compass'){const distance=Math.hypot(local.x,local.y);if(Math.abs(distance-140)>34||distance<1)return next;return world({x:local.x*140/distance,y:local.y*140/distance});}
-    if(guide.type==='ruler'){if(Math.abs(local.y)>42)return next;return world({x:local.x,y:0});}
-    const project=(point,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,length=vx*vx+vy*vy,t=clamp(((point.x-a.x)*vx+(point.y-a.y)*vy)/length,0,1);return{x:a.x+vx*t,y:a.y+vy*t};},corners=[{x:-150,y:105},{x:150,y:105},{x:-150,y:-105}],candidates=[[corners[0],corners[1]],[corners[1],corners[2]],[corners[2],corners[0]]].map(edge=>project(local,...edge)),nearest=candidates.sort((a,b)=>Math.hypot(local.x-a.x,local.y-a.y)-Math.hypot(local.x-b.x,local.y-b.y))[0];return Math.hypot(local.x-nearest.x,local.y-nearest.y)<=34?world(nearest):next;
+    const snapDistance=clamp(16/state.view.zoom,14,25);
+    if(guide.type==='ruler'){
+      const edges=[-34,34],index=state.guideSnap?.type==='ruler'?state.guideSnap.edge:Math.abs(local.y-edges[0])<=Math.abs(local.y-edges[1])?0:1;
+      if(!state.guideSnap&&Math.abs(local.y-edges[index])>snapDistance)return next;
+      state.guideSnap={type:'ruler',edge:index};return world({x:local.x,y:edges[index]});
+    }
+    const project=(point,a,b)=>{const vx=b.x-a.x,vy=b.y-a.y,length=vx*vx+vy*vy,t=clamp(((point.x-a.x)*vx+(point.y-a.y)*vy)/length,0,1);return{x:a.x+vx*t,y:a.y+vy*t};},corners=[{x:-150,y:105},{x:150,y:105},{x:-150,y:-105}],edges=[[corners[0],corners[1]],[corners[1],corners[2]],[corners[2],corners[0]]],candidates=edges.map(edge=>project(local,...edge));
+    let edgeIndex=state.guideSnap?.type==='triangle'?state.guideSnap.edge:0;if(!state.guideSnap)for(let index=1;index<candidates.length;index++)if(Math.hypot(local.x-candidates[index].x,local.y-candidates[index].y)<Math.hypot(local.x-candidates[edgeIndex].x,local.y-candidates[edgeIndex].y))edgeIndex=index;
+    const nearest=candidates[edgeIndex];if(!state.guideSnap&&Math.hypot(local.x-nearest.x,local.y-nearest.y)>snapDistance)return next;state.guideSnap={type:'triangle',edge:edgeIndex};return world(nearest);
   }
 
   function eraseWholeStrokeAt(next){const note=activeNote(),radius=Math.max(10,state.pen.size*3.2),before=note.inkStrokes.length;note.inkStrokes=note.inkStrokes.filter(item=>!item.points?.some(point=>Math.hypot(point.x-next.x,point.y-next.y)<=radius));return before!==note.inkStrokes.length;}
@@ -703,7 +711,7 @@
       // A finger contact reports ~40-90 CSS px of contact width (Chrome scales the Android touch ellipse up), so the old flat 24px limit rejected virtually every finger stroke. Touch-only devices therefore only ignore a genuine palm/heel (>140) and keep the pen-priority window; pen-first devices (Windows) keep the original 24px rule untouched.
       const coarse=coarsePointer(),palmLimit=coarse?140:24;
       if (state.tool !== 'ink'||state.drawing||(event.pointerType==='touch'&&(performance.now()-lastPenSeen<1800||Math.max(event.width||0,event.height||0)>palmLimit))||(event.pointerType!=='pen'&&event.button!==0)) return;
-      event.preventDefault();event.stopPropagation();state.drawing=true;pointerId=event.pointerId;lastEventTime=-1;strokeTouch=coarse;inkCanvasRect=canvas.getBoundingClientRect();
+      event.preventDefault();event.stopPropagation();state.drawing=true;pointerId=event.pointerId;lastEventTime=-1;strokeTouch=coarse;state.guideSnap=null;inkCanvasRect=canvas.getBoundingClientRect();
       const mode=requestedMode(event)||state.pen.mode;strokeErased=false;stroke={id:id(),mode,color:state.pen.color,size:state.pen.size,points:[constrainInkPoint(point(event))],temporary:mode!==state.pen.mode};if(mode==='eraser-stroke'){checkpoint();strokeErased=eraseWholeStrokeAt(stroke.points[0]);if(strokeErased)renderInk();}
       if(mode!=='lasso'){const painted=state.inkSelection.size>0||$('#inkOverlay').dataset.painted==='1';state.inkSelection.clear();if(painted)renderInkSelection();}
       canvas.setPointerCapture(event.pointerId);
@@ -718,7 +726,7 @@
     if('onpointerrawupdate' in window)canvas.addEventListener('pointerrawupdate',sample,{passive:true});
     const finish=event=>{
       if(!state.drawing||(event&&event.pointerId!==pointerId))return;state.drawing=false;
-      const completed=stroke;stroke=null;pointerId=null;
+      const completed=stroke;stroke=null;pointerId=null;state.guideSnap=null;
       if(event?.type==='pointercancel'){renderInk();return;}
       if(completed.mode==='lasso'){
         state.inkSelection.clear();if(completed.points.length>2)(activeNote().inkStrokes||[]).forEach(item=>{if(!String(item.mode).startsWith('eraser')&&(item.points||[]).some(p=>pointInPolygon(p,completed.points)))state.inkSelection.add(item.id);});renderInkSelection();return;
@@ -1147,7 +1155,7 @@
     $('#closeImageViewer').onclick=()=>$('#imageViewer').close();$('#imageZoomIn').onclick=()=>{state.imageViewer.zoom=clamp(state.imageViewer.zoom+.2,.2,4);updateImageViewer();};$('#imageZoomOut').onclick=()=>{state.imageViewer.zoom=clamp(state.imageViewer.zoom-.2,.2,4);updateImageViewer();};$('#imageZoomReset').onclick=()=>{state.imageViewer={zoom:1,x:0,y:0};updateImageViewer();};
     setupImageViewerGestures();
     $$('dialog').forEach(dialog=>dialog.addEventListener('pointerdown',event=>{const rect=dialog.getBoundingClientRect();if(event.target===dialog&&(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom))dialog.close('cancel');}));
-    document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node?.matches?.('.menu-surface,.color-palette,.fluent-picker,#noteMenuButton,#workspacePicker,#workspaceMore,#sortNotesButton,#textColorButton'));if(!inside)closeMenus();});
+    document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node?.matches?.('.menu-surface,.color-palette,.fluent-picker,.text-color-button,[data-editor-color],#noteMenuButton,#workspacePicker,#workspaceMore,#sortNotesButton'));if(!inside)closeMenus();});
     document.addEventListener('contextmenu',event=>{event.preventDefault();if(state.tool==='ink'&&event.target.closest('#inkCanvas'))return;if(state.readingMode&&event.target.closest('.work-pane'))return;const editable=event.target.closest('input,textarea,[contenteditable]');if(editable){state.contextTarget=editable;openObjectContextMenu('text',null,event.clientX,event.clientY);return;}if(event.target.closest('.note-card,.folder-item,#workspacePicker,.idea-node'))return;const block=event.target.closest('.content-block');if(block){openObjectContextMenu('block',block.dataset.blockId,event.clientX,event.clientY);return;}if(event.target.closest('#canvasViewport'))openObjectContextMenu('canvas',null,event.clientX,event.clientY);});
     let longPressTimer=null,longPressStart=null;
     document.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch'||event.target.closest('input,[contenteditable],button,select'))return;longPressStart={x:event.clientX,y:event.clientY,target:event.target};longPressTimer=setTimeout(()=>{const editorElement=longPressStart.target.closest('.unified-editor-card'),editorBlock=longPressStart.target.closest('.content-block'),card=longPressStart.target.closest('.free-card'),idea=longPressStart.target.closest('.idea-node');if(editorBlock&&editorElement){const record=editorRecords().find(item=>(item.id||'primary')===editorElement.dataset.editorId);if(record)openUnifiedBlockContextMenu(record,editorBlock.dataset.blockId,longPressStart.x,longPressStart.y);}else if(editorElement&&editorElement.id!=='documentCard')openObjectContextMenu('editor',editorElement.dataset.editorId,longPressStart.x,longPressStart.y);else if(card)openObjectContextMenu('card',card.dataset.cardId,longPressStart.x,longPressStart.y);else if(idea)openObjectContextMenu('idea',idea.dataset.ideaId,longPressStart.x,longPressStart.y);else if(longPressStart.target.closest('#canvasViewport'))openObjectContextMenu('canvas',null,longPressStart.x,longPressStart.y);navigator.vibrate?.(20);},560);},{passive:true});

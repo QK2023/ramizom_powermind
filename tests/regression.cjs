@@ -25,12 +25,15 @@ async function run() {
   assert(source.includes('contenteditable="${!state.readingMode}" spellcheck="true" role="textbox" aria-multiline="true"'), 'Each document uses one continuous editable host');
   assert(source.includes("'S','STRIKE','DEL'"), 'Strike-through markup survives sanitizing, saving, and re-rendering');
   assert(source.includes("document.execCommand('styleWithCSS',false,false)"), 'Inline formatting commands prefer stable semantic tags');
+  assert(source.includes("state.guideSnap={type:'ruler',edge:index}"), 'Ruler ink locks to a visible edge instead of its centre line');
+  assert(source.includes("state.guideSnap={type:'triangle',edge:edgeIndex}"), 'Triangle ink stays on one edge for the duration of a stroke');
+  assert(source.includes(".text-color-button,[data-editor-color]"), 'Opening a document color palette is not mistaken for an outside click');
   assert(!source.includes('id="addBlockRow"'), 'The obsolete Add block row is removed');
   assert(source.includes("editor.addEventListener('beforeinput'"), 'Typing history snapshots are captured before text mutates');
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=6"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=7"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
   assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -44,7 +47,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=6"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=7"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -80,8 +83,8 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=6') && html.includes('style.css?v=6') && html.includes('app.js?v=6'), 'Updated app resources receive a cache version');
-  assert(css.includes('background:url("icon.svg?v=6")'), 'Startup and folder-gate marks reuse the rounded installed-app icon');
+  assert(html.includes('manifest.webmanifest?v=7') && html.includes('style.css?v=7') && html.includes('app.js?v=7'), 'Updated app resources receive a cache version');
+  assert(css.includes('background:url("icon.svg?v=7")'), 'Startup and folder-gate marks reuse the rounded installed-app icon');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length, 'Static HTML IDs are unique');
   const localAssets = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(match => match[1].split('?')[0]).filter(value => value && !value.startsWith('#') && !/^[a-z]+:/i.test(value));
@@ -166,7 +169,7 @@ async function run() {
   assert(source.includes("if(!hasContent){box.hidden=true;if(canvas.dataset.painted!=='1')return;"), 'Repainting the overlay is skipped entirely while nothing is painted on it');
   assert(source.includes("const painted=state.inkSelection.size>0||$('#inkOverlay').dataset.painted==='1'"), 'Starting a stroke only clears the overlay when something is painted on it');
   assert(source.includes('const rect=inkCanvasRect||(inkCanvasRect=canvas.getBoundingClientRect())'), 'Ink sampling reuses cached canvas bounds instead of forcing layout for every sample');
-  assert(source.includes('strokeTouch=coarse;inkCanvasRect=canvas.getBoundingClientRect();'), 'The cached ink bounds are refreshed once per stroke');
+  assert(/strokeTouch=coarse;[^;]*guideSnap=null;inkCanvasRect=canvas\.getBoundingClientRect\(\);/.test(source), 'Each stroke resets guide snapping and refreshes the cached ink bounds');
   assert(source.includes('inkCanvasRect = null;'), 'Pan, zoom and fit invalidate the cached ink bounds');
   assert(source.includes('palmLimit=coarse?140:24'), 'Finger contacts draw on touch-only devices while pen-first devices keep the original 24px palm rule');
   assert(source.includes("minimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7"), 'The pen keeps its dense .22 sampling while touch strokes filter wider');
