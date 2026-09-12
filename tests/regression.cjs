@@ -22,6 +22,11 @@ async function run() {
   assert.equal((source.match(/function unifiedEditorToolbar\(/g) || []).length, 1, 'Only one editor toolbar implementation exists');
   assert(source.includes("$$('.document-card',$('#canvasWorld')).forEach(element=>element.remove())"), 'Unified render clears the original card before rebuilding editors');
   assert(html.includes('<section class="document-card" id="documentCard"></section>'), 'The primary editor has no duplicate static implementation');
+  assert(source.includes('contenteditable="${!state.readingMode}" spellcheck="true" role="textbox" aria-multiline="true"'), 'Each document uses one continuous editable host');
+  assert(!source.includes('id="addBlockRow"'), 'The obsolete Add block row is removed');
+  assert(source.includes("editor.addEventListener('beforeinput'"), 'Typing history snapshots are captured before text mutates');
+  assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
+  assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
   assert(html.includes('rel="manifest" href="manifest.webmanifest"'), 'Page declares its PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
@@ -33,7 +38,7 @@ async function run() {
     assert(icon.src && icon.type && icon.sizes, `Manifest icon is fully described: ${icon.src}`);
     const purposes = String(icon.purpose || 'any').trim().split(/\s+/);
     purposes.forEach(purpose => assert(allowedPurposes.has(purpose), `Manifest icon purpose is valid: ${purpose}`));
-    assert(fs.existsSync(path.join(projectRoot, icon.src.replace(/^\.\//, ''))), `Manifest icon file exists: ${icon.src}`);
+    assert(fs.existsSync(path.join(projectRoot, icon.src.split('?')[0].replace(/^\.\//, ''))), `Manifest icon file exists: ${icon.src}`);
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.some(icon => String(icon.purpose || '').includes('maskable') && String(icon.sizes).includes('512')), 'A 512px maskable icon backs OS icon masks');
@@ -67,16 +72,7 @@ async function run() {
   assert(fluentOptions, 'The fluent picker panel has a base rule');
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
-  assert(source.includes("navigator.serviceWorker.register('sw.js',{updateViaCache:'none'})"), 'The app registers the offline shell with an uncached worker script');
-  assert(!source.includes('serviceWorker.getRegistration'), 'The retired service worker teardown is gone');
-  assert(fs.existsSync(path.join(projectRoot, 'sw.js')), 'The offline shell script ships with the app');
-  const sw = fs.readFileSync(path.join(projectRoot, 'sw.js'), 'utf8');
-  new vm.Script(sw);
-  assert(sw.includes('await self.skipWaiting()') && sw.includes('self.clients.claim()'), 'A new worker takes over immediately so an update is never left waiting');
-  assert(sw.includes("{ cache: 'no-cache' }"), 'The worker revalidates with the server instead of trusting a stale HTTP cache');
-  assert(sw.includes('BROWSER_OWNED'), 'The worker stays out of the way of the manifest and the icons');
-  assert(/SHELL_CACHE = 'powermind-shell-v\d+'/.test(sw), 'The shell cache is versioned so superseded entries are retired');
-  assert(!/caches\.open[\s\S]{0,200}manifest\.webmanifest/.test(sw), 'The manifest is never cached, so an installed app can still be refreshed');
+  assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length, 'Static HTML IDs are unique');
   const localAssets = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(match => match[1].split('?')[0]).filter(value => value && !value.startsWith('#') && !/^[a-z]+:/i.test(value));
@@ -91,6 +87,9 @@ async function run() {
   assert(source.includes('updateNoteCommandAvailability(true);'), 'Newly selected notes immediately enable their note commands');
   assert(source.includes('function printInkDataUrl(note)'), 'Print output uses a dedicated ink renderer');
   assert(source.includes('drawStroke(context,stroke,1,false)'), 'Print ink resolves adaptive colors for a light paper background');
+  assert(source.includes('if(vectors.length)vectors.forEach'), 'Print prefers theme-independent vector ink over the dark screen raster');
+  assert(source.includes('normalizePrintTextColors(scene)'), 'Print converts explicit white editor text for a light paper background');
+  assert(css.includes('color-scheme:light') && css.includes('background:#fff!important'), 'Print cards use a theme-independent light paper palette');
   assert(source.includes('function resumeRememberedFolder()'), 'A remembered folder can be reopened without showing the picker');
   const editorMarkup = section('  function unifiedEditorBlockMarkup(', '  function openUnifiedSlashMenu(');
   assert(!editorMarkup.includes('secondary-block-handle') && !editorMarkup.includes('data-editor-delete'), 'Editor markup has no per-block drag or delete chrome');
