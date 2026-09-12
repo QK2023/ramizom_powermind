@@ -553,7 +553,7 @@ html:lang(ja) .accent-button,html:lang(ja) .workspace-picker,html:lang(ja) .nav-
 }
 
 /* Portrait is a three-page flow: workspace home, note list, then editor. */
-@media (max-width: 800px) and (orientation: portrait) {
+@media (max-width:1100px) and (orientation:portrait) {
   .app-shell { display:block; }
   .nav-pane,.notes-pane { position:fixed;inset:0;width:100dvw;height:100dvh;box-sizing:border-box;border-right:0; }
   .nav-pane { z-index:120;transform:translateX(-105%);padding:16px 12px calc(10px + env(safe-area-inset-bottom));transition:transform .28s var(--ease); }
@@ -600,8 +600,8 @@ html:lang(ja) .accent-button,html:lang(ja) .workspace-picker,html:lang(ja) .nav-
   .print-canvas-scene .secondary-block [data-secondary-delete]{display:none}
 }
 .secondary-resize-frame{inset:0;border-width:6px;border-radius:9px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--nav-accent) 88%,transparent);opacity:.72}.secondary-resize-east{top:7px;right:0;bottom:7px;width:24px}.secondary-resize-south{left:7px;right:7px;bottom:0;height:24px}.secondary-resize-corner{right:3px;bottom:3px;width:34px;height:34px;border-radius:9px}.secondary-resize-corner::after{right:6px;bottom:6px;width:11px;height:11px}
-@media (max-width:800px) and (orientation:portrait){.document-resize-frame,.secondary-resize-frame{inset:0;border-width:6px}.resize-east,.secondary-resize-east{right:0;width:28px}.resize-south,.secondary-resize-south{bottom:0;height:28px}.resize-corner,.secondary-resize-corner{right:3px;bottom:3px;width:38px;height:38px}}
-@media (max-width:800px) and (orientation:portrait){.canvas-toolbar.ink-active{height:56px;min-height:56px;flex-wrap:nowrap;align-content:normal;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x;-webkit-overflow-scrolling:touch}.canvas-toolbar.ink-active #toolSelector,.canvas-toolbar.ink-active .zoom-control,.canvas-toolbar.ink-active #inkOptions{order:initial;flex:0 0 auto}.canvas-toolbar.ink-active #inkOptions{display:flex;width:auto;min-width:max-content!important;max-width:none;min-height:0;padding:0;overflow:visible;touch-action:pan-x}.canvas-toolbar.ink-active .ink-mode{min-width:54px;min-height:36px}.canvas-toolbar.ink-active .color-chip{width:26px!important;min-width:26px;max-width:26px;height:26px!important;min-height:26px;max-height:26px;flex-basis:26px}.canvas-toolbar.ink-active #penSize{width:96px;min-height:36px}.canvas-toolbar.ink-active .subtle-button{min-height:38px;padding-inline:12px}}
+@media (max-width:1100px) and (orientation:portrait){.document-resize-frame,.secondary-resize-frame{inset:0;border-width:6px}.resize-east,.secondary-resize-east{right:0;width:28px}.resize-south,.secondary-resize-south{bottom:0;height:28px}.resize-corner,.secondary-resize-corner{right:3px;bottom:3px;width:38px;height:38px}}
+@media (max-width:1100px) and (orientation:portrait){.canvas-toolbar.ink-active{height:56px;min-height:56px;flex-wrap:nowrap;align-content:normal;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;touch-action:pan-x;-webkit-overflow-scrolling:touch}.canvas-toolbar.ink-active #toolSelector,.canvas-toolbar.ink-active .zoom-control,.canvas-toolbar.ink-active #inkOptions{order:initial;flex:0 0 auto}.canvas-toolbar.ink-active #inkOptions{display:flex;width:auto;min-width:max-content!important;max-width:none;min-height:0;padding:0;overflow:visible;touch-action:pan-x}.canvas-toolbar.ink-active .ink-mode{min-width:54px;min-height:36px}.canvas-toolbar.ink-active .color-chip{width:26px!important;min-width:26px;max-width:26px;height:26px!important;min-height:26px;max-height:26px;flex-basis:26px}.canvas-toolbar.ink-active #penSize{width:96px;min-height:36px}.canvas-toolbar.ink-active .subtle-button{min-height:38px;padding-inline:12px}}
 @media (max-width:800px) and (pointer:coarse){.nav-item,.folder-item{min-height:42px;height:auto}.pane-header .icon-button,.top-commandbar .icon-button{width:42px;height:42px}.folder-item .folder-more,.note-card .note-more{width:36px;height:36px}.ink-selection-menu{max-width:calc(100vw - 24px);overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}.ink-selection-menu button,.ink-selection-menu label{width:38px;height:38px;flex:0 0 38px}}
 
 /* The editor stores structured blocks internally, but presents them as one continuous document. */
@@ -704,7 +704,7 @@ body.theme-dark[data-accent="orange"],body.theme-dark[data-accent="yellow"],body
 .unified-editor-card .content-block[data-type="text"] .block-content,.unified-editor-card .secondary-block[data-type="text"] .secondary-block-content{min-height:calc(var(--body-font-size,16px) * 1.62);padding-top:0;padding-bottom:0;line-height:1.62}
 
 /* Prevent portrait ribbon geometry and scroll anchoring from changing by mode. */
-@media (max-width:800px) and (orientation:portrait){
+@media (max-width:1100px) and (orientation:portrait){
   .canvas-toolbar,.canvas-toolbar.ink-active{height:60px!important;min-height:60px!important;max-height:60px!important;padding:0 7px!important;gap:2px!important;align-items:center!important;align-content:normal!important;flex-wrap:nowrap!important;scroll-snap-type:none!important;overflow-anchor:none;overflow-x:auto!important;overflow-y:hidden!important}
   .canvas-toolbar .ribbon-group,.canvas-toolbar.ink-active .ribbon-group,.canvas-toolbar.ink-active #inkOptions{height:60px!important;min-height:60px!important;max-height:60px!important;padding:6px 9px!important;gap:5px!important;align-items:center!important;align-content:normal!important;box-sizing:border-box!important}
   .canvas-toolbar #toolSelector,.canvas-toolbar.ink-active #toolSelector{width:auto!important;height:42px!important;min-height:42px!important;flex:0 0 auto!important;padding:3px!important;transform:none!important}

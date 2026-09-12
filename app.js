@@ -1089,7 +1089,8 @@
   function setupFluentPickers(){const handlers={language:value=>{localStorage.setItem('pm.language',value);applyTranslations();renderAll();},theme:applyTheme,accent:applyAccent,penButton:value=>{localStorage.setItem('pm.penButtonAction',value);updatePicker('penButton',value);}};$$('.fluent-picker').forEach(picker=>{const name=picker.dataset.picker,button=$('.fluent-select',picker),menu=$('.fluent-options',picker),options=$$('[data-picker-value]',menu);const open=()=>{closeMenus();menu.classList.add('open');button.setAttribute('aria-expanded','true');(options.find(option=>option.classList.contains('selected'))||options[0])?.focus();};button.onclick=event=>{event.stopPropagation();menu.classList.contains('open')?closeMenus():open();};button.onkeydown=event=>{if(event.key==='ArrowDown'||event.key==='Enter'||event.key===' '){event.preventDefault();open();}};options.forEach((option,index)=>{option.onclick=event=>{event.stopPropagation();handlers[name](option.dataset.pickerValue);closeMenus();button.focus();};option.onkeydown=event=>{if(event.key==='Escape'){event.preventDefault();closeMenus();button.focus();}if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();options[(index+(event.key==='ArrowDown'?1:-1)+options.length)%options.length].focus();}};});});}
   function syncNavigationToggle(){const toggle=$('#collapseNav'),shell=$('.app-shell'),navSlot=$('#navMenuSlot'),workSlot=$('#workMenuSlot');if(!toggle||!shell||!navSlot||!workSlot)return;const collapsed=shell.classList.contains('nav-collapsed'),destination=collapsed?workSlot:navSlot;if(toggle.parentElement!==destination)destination.append(toggle);toggle.classList.toggle('in-work-pane',collapsed);}
   function applyPaneLayout(){const shell=$('.app-shell');shell.classList.toggle('nav-collapsed',localStorage.getItem('pm.navCollapsed')==='1');shell.classList.toggle('notes-collapsed',localStorage.getItem('pm.notesCollapsed')==='1');shell.classList.remove('focus-mode');localStorage.removeItem('pm.focusMode');syncNavigationToggle();}
-  const isPortraitMobile=()=>matchMedia('(max-width: 800px) and (orientation: portrait)').matches;
+  const compactPortraitQuery='(max-width: 1100px) and (orientation: portrait)';
+  const isPortraitMobile=()=>matchMedia(compactPortraitQuery).matches;
   function showMobileStage(stage){
     if(!isPortraitMobile())return;
     state.mobileStage=stage;
@@ -1215,7 +1216,7 @@
     addEventListener('beforeprint',()=>{if(activeNote())preparePrintSheet();});
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingSave();});
     addEventListener('pagehide',flushPendingSave);
-    matchMedia('(max-width: 800px) and (orientation: portrait)').addEventListener('change',event=>{state.mobileStage=event.matches?(activeNote()?'editor':'notes'):'editor';syncMobileHierarchy();});
+    matchMedia(compactPortraitQuery).addEventListener('change',event=>{state.mobileStage=event.matches?(activeNote()?'editor':'notes'):'editor';syncMobileHierarchy();});
   }
 
   function renderAll(){
