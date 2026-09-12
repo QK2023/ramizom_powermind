@@ -23,12 +23,14 @@ async function run() {
   assert(source.includes("$$('.document-card',$('#canvasWorld')).forEach(element=>element.remove())"), 'Unified render clears the original card before rebuilding editors');
   assert(html.includes('<section class="document-card" id="documentCard"></section>'), 'The primary editor has no duplicate static implementation');
   assert(source.includes('contenteditable="${!state.readingMode}" spellcheck="true" role="textbox" aria-multiline="true"'), 'Each document uses one continuous editable host');
+  assert(source.includes("'S','STRIKE','DEL'"), 'Strike-through markup survives sanitizing, saving, and re-rendering');
+  assert(source.includes("document.execCommand('styleWithCSS',false,false)"), 'Inline formatting commands prefer stable semantic tags');
   assert(!source.includes('id="addBlockRow"'), 'The obsolete Add block row is removed');
   assert(source.includes("editor.addEventListener('beforeinput'"), 'Typing history snapshots are captured before text mutates');
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=5"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=6"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
   assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -42,7 +44,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=5"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=6"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -78,8 +80,8 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=5') && html.includes('style.css?v=5') && html.includes('app.js?v=5'), 'Updated app resources receive a cache version');
-  assert(css.includes('background:url("icon.svg?v=5")'), 'Startup and folder-gate marks reuse the rounded installed-app icon');
+  assert(html.includes('manifest.webmanifest?v=6') && html.includes('style.css?v=6') && html.includes('app.js?v=6'), 'Updated app resources receive a cache version');
+  assert(css.includes('background:url("icon.svg?v=6")'), 'Startup and folder-gate marks reuse the rounded installed-app icon');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length, 'Static HTML IDs are unique');
   const localAssets = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(match => match[1].split('?')[0]).filter(value => value && !value.startsWith('#') && !/^[a-z]+:/i.test(value));
