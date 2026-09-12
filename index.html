@@ -9,14 +9,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="A visual note workspace for blocks, mind maps, and handwriting.">
-  <meta name="application-name" content="Ramizom PowerMind">
+  <meta name="application-name" content="Ramizom PowerMind Preview">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Ramizom PowerMind">
-  <title>Ramizom PowerMind</title>
-  <link rel="icon" href="icon.svg?v=18" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=18">
-  <link rel="manifest" href="manifest.webmanifest?v=18">
-  <link rel="stylesheet" href="style.css?v=18">
+  <meta name="apple-mobile-web-app-title" content="Ramizom PowerMind Preview">
+  <title>Ramizom PowerMind Preview</title>
+  <link rel="icon" href="icon.svg?v=19" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=19">
+  <link rel="manifest" href="manifest.webmanifest?v=19">
+  <link rel="stylesheet" href="style.css?v=19">
   <script>
   window.PM_SPLASH_STARTED=performance.now();
   // The app itself boots asynchronously, so the saved theme is resolved here, while the head
@@ -98,21 +98,21 @@
     </symbol>
   </defs></svg>
 
-  <div class="startup-splash" id="startupSplash" role="status" aria-label="Ramizom PowerMind">
+  <div class="startup-splash" id="startupSplash" role="status" aria-label="Ramizom PowerMind Preview">
     <div class="splash-brand">
       <div class="splash-mark"><svg viewBox="0 0 128 128"><use href="#i-app-logo"/></svg></div>
-      <strong>Ramizom PowerMind</strong>
+      <strong>Ramizom PowerMind Preview</strong>
     </div>
   </div>
 
   <section class="folder-gate" id="folderGate" hidden>
-    <div class="folder-gate-card"><div class="splash-mark"><svg viewBox="0 0 128 128"><use href="#i-app-logo"/></svg></div><div><h1>Ramizom PowerMind</h1><p data-i18n="folderGateBody">Choose a system folder before you begin. Your notes stay visible in File Explorer, and the folder can be reopened or moved like ordinary files.</p></div><button type="button" class="accent-button" id="chooseFolderGate"><svg><use href="#i-folder"/></svg><span data-i18n="chooseFolder">Choose folder</span></button></div>
+    <div class="folder-gate-card"><div class="splash-mark"><svg viewBox="0 0 128 128"><use href="#i-app-logo"/></svg></div><div><h1>Ramizom PowerMind Preview</h1><p data-i18n="folderGateBody">Choose a system folder before you begin. Your notes stay visible in File Explorer, and the folder can be reopened or moved like ordinary files.</p></div><button type="button" class="accent-button" id="chooseFolderGate"><svg><use href="#i-folder"/></svg><span data-i18n="chooseFolder">Choose folder</span></button></div>
   </section>
 
   <section class="folder-gate" id="unsupportedGate" hidden>
     <div class="folder-gate-card platform-gate-card">
       <div class="splash-mark"><svg viewBox="0 0 128 128"><use href="#i-app-logo"/></svg></div>
-      <div><h1 data-i18n="unsupportedTitle">This browser can’t save notes yet</h1><p id="unsupportedReason" data-i18n="unsupportedBody">Ramizom PowerMind keeps every note as an ordinary file inside a folder you choose, which needs the File System Access API.</p></div>
+      <div><h1 data-i18n="unsupportedTitle">This browser can’t save notes yet</h1><p id="unsupportedReason" data-i18n="unsupportedBody">Ramizom PowerMind Preview keeps every note as an ordinary file inside a folder you choose, which needs the File System Access API.</p></div>
       <div class="platform-support">
         <strong data-i18n="unsupportedSupportedLabel">Use one of these</strong>
         <ul><li data-i18n="unsupportedDesktop">Microsoft Edge 105 or later, or Google Chrome 105 or later (Windows, macOS, Linux)</li><li data-i18n="unsupportedAndroid">Google Chrome for Android 132 or later</li></ul>
@@ -129,7 +129,7 @@
     <aside class="nav-pane" id="navPane">
       <div class="brand-row">
         <div class="app-mark"><svg><use href="#i-map"/></svg></div>
-        <div class="brand-copy"><strong>Ramizom</strong><span>PowerMind</span></div>
+        <div class="brand-copy"><strong>Ramizom</strong><span>PowerMind Preview</span></div>
         <span id="navMenuSlot"><button class="icon-button desktop-pane-toggle" id="collapseNav" title="Toggle navigation" aria-label="Toggle navigation"><svg><use href="#i-menu"/></svg></button></span>
       </div>
 
@@ -229,7 +229,7 @@
         <div class="ink-cursor" id="inkCursor" aria-hidden="true"></div>
         <div class="canvas-zoom"><div class="zoom-control"><button id="zoomOut">−</button><span id="zoomLabel">100%</span><button id="zoomIn">+</button><button id="zoomReset" data-i18n="fit">Fit</button></div></div>
       </div>
-      <footer class="statusbar"><span id="canvasCoordinates">0, 0</span><span id="blockCount">0 blocks</span><span>Ramizom PowerMind</span></footer>
+      <footer class="statusbar"><span id="canvasCoordinates">0, 0</span><span id="blockCount">0 blocks</span><span>Ramizom PowerMind Preview</span></footer>
     </section>
   </main>
 
@@ -274,7 +274,7 @@
   <section id="printSheet" aria-hidden="true"></section>
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="i18n.js?v=18"></script>
-  <script src="app.js?v=18"></script>
+  <script src="i18n.js?v=19"></script>
+  <script src="app.js?v=19"></script>
 </body>
 </html>

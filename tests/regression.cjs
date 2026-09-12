@@ -48,9 +48,9 @@ async function run() {
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=18"'), 'Page declares its versioned PWA manifest');
-  assert.equal(manifest.name, 'Ramizom PowerMind');
-  assert.equal(manifest.short_name, 'PowerMind');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=19"'), 'Page declares its versioned PWA manifest');
+  assert.equal(manifest.name, 'Ramizom PowerMind Preview');
+  assert.equal(manifest.short_name, 'PowerMind Preview');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
   assert(Array.isArray(manifest.icons) && manifest.icons.length > 0, 'Manifest declares install icons');
   const allowedPurposes = new Set(['any', 'maskable', 'monochrome']);
@@ -62,7 +62,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=18"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=19"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -99,7 +99,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=18') && html.includes('style.css?v=18') && html.includes('app.js?v=18'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=19') && html.includes('style.css?v=19') && html.includes('app.js?v=19'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -239,6 +239,10 @@ async function run() {
   assert(source.includes("window.removeEventListener('pointermove',move)"), 'Drag listeners are always removed when the drag ends');
   assert(!source.includes("element.addEventListener('pointermove',move)"), 'No drag binds its move handler to the dragged element');
   assert(css.includes('.idea-node.dragging {') && css.includes('.idea-node.group-dragging {'), 'Dragging a node or its whole map is visible');
+  assert(source.includes('idea.width=clamp(Number(idea.width)||220,160,720)') && source.includes('data-idea-resize'), 'Mind-map node widths migrate safely and can be resized');
+  assert(source.includes('<div class="idea-text">') && source.includes('<textarea aria-label="Idea" readonly>'), 'Long idea text wraps in display mode and uses a multiline editor');
+  assert(css.includes('.idea-text{width:100%') && css.includes('.idea-resize{position:absolute'), 'Mind-map nodes show wrapping text and a visible resize affordance');
+  assert(source.includes('const estimatedHeight=idea=>') && source.includes("parent.x+(parent.width||220)+gap"), 'Auto layout respects resized node widths and multiline idea height');
   console.log('PASS: syntax, unified editor path, import tree/IDs/content/source isolation, missing optional fields, system-folder storage, ink geometry, touch/pen ink cost split, mind-map group drag');
 }
 module.exports = run;
