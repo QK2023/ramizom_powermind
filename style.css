@@ -245,7 +245,7 @@ body .app-shell.nav-collapsed.notes-collapsed,body .app-shell.focus-mode { grid-
 .work-empty > span { margin-bottom: 12px; font-size: 12px; }
 .work-empty .accent-button { width: auto; min-width: 126px; }
 .work-empty .accent-button { background:var(--nav-accent);color:var(--accent-foreground); }
-.canvas-world { position: absolute; left: 0; top: 0; width: 4000px; height: 3000px; transform-origin: 0 0; will-change: transform; }
+.canvas-world { position: absolute; left: 0; top: 0; width: 4000px; height: 3000px; transform-origin: 0 0; will-change: transform; contain:layout style; backface-visibility:hidden; }
 .connection-layer { position: absolute; inset: 0; z-index: 89; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
 .connection-path { fill: none; stroke: color-mix(in srgb, var(--nav-accent) 76%, var(--text)); stroke-width: 2.35; filter:drop-shadow(0 1px 1px color-mix(in srgb,var(--text) 18%,transparent)); }
 #inkCanvas { position: absolute; inset: 0; z-index: 100; width: 4000px; height: 3000px; pointer-events: none; touch-action: none; }
@@ -327,6 +327,11 @@ body .app-shell.nav-collapsed.notes-collapsed,body .app-shell.focus-mode { grid-
 .idea-node.formula-node { min-width: 180px; text-align:center; }
 .idea-node.formula-node math { font-size: 18px; }
 .idea-node.collapsed::after { content:"…"; position:absolute; right:8px; bottom:-15px; padding:0 6px; border-radius:8px; background:var(--nav-accent); color:white; font-size:10px; }
+/* Pan and pinch stay on the compositor. Expensive Fluent effects return as soon as the gesture ends. */
+.canvas-viewport.navigating .document-card { backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;transition:none!important; }
+.canvas-viewport.navigating .idea-node { box-shadow:none!important;transition:none!important; }
+.canvas-viewport.navigating .connection-path { filter:none!important; }
+.canvas-viewport.navigating .document-resize-frame,.canvas-viewport.navigating .document-resize-handle,.canvas-viewport.navigating .node-tools { opacity:0!important;transition:none!important; }
 .canvas-mode-badge { position: absolute; left: 50%; bottom: 15px; z-index: 20; padding: 6px 10px; border-radius: 5px; background: rgba(28,28,30,.88); color: white; box-shadow: var(--shadow-2); opacity: 0; transform: translate(-50%,8px); transition: opacity .16s, transform .16s; pointer-events: none; font-size: 11px; }
 .canvas-mode-badge.show { opacity: 1; transform: translate(-50%,0); }
 .statusbar { height: 25px; display: flex; align-items: center; gap: 18px; padding: 0 12px; border-top: 1px solid var(--stroke); background: rgba(255,255,255,.35); color: var(--text-3); font-size: 10px; }

@@ -12,6 +12,8 @@
 
   // Cached ink-canvas bounds, valid for the duration of one stroke. Invalidated by updateTransform() so pan/zoom/pinch can never leave a stale rect behind.
   let inkCanvasRect = null;
+  let transformFrame = 0;
+  let navigationIdleTimer = 0;
   const state = {
     db: null,
     workspaceId: null,
@@ -761,10 +763,26 @@
     canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);canvas.addEventListener('lostpointercapture',finish);
   }
 
-  function updateTransform() {
+  function updateTransform(immediate = false) {
     inkCanvasRect = null;
-    $('#canvasWorld').style.transform = `translate(${state.view.x}px,${state.view.y}px) scale(${state.view.zoom})`;
-    $('#zoomLabel').textContent = `${Math.round(state.view.zoom*100)}%`;
+    const apply = () => {
+      transformFrame = 0;
+      const world=$('#canvasWorld'),label=$('#zoomLabel');
+      if(world)world.style.transform = `translate3d(${state.view.x}px,${state.view.y}px,0) scale(${state.view.zoom})`;
+      if(label)label.textContent = `${Math.round(state.view.zoom*100)}%`;
+    };
+    if(immediate){if(transformFrame)cancelAnimationFrame(transformFrame);apply();return;}
+    if(!transformFrame)transformFrame=requestAnimationFrame(apply);
+  }
+
+  function beginCanvasMotion(){
+    clearTimeout(navigationIdleTimer);
+    $('#canvasViewport')?.classList.add('navigating');
+  }
+
+  function endCanvasMotion(delay=80){
+    clearTimeout(navigationIdleTimer);
+    navigationIdleTimer=setTimeout(()=>$('#canvasViewport')?.classList.remove('navigating'),delay);
   }
 
   function zoomAt(nextZoom, clientX = $('#canvasViewport').getBoundingClientRect().left + $('#canvasViewport').clientWidth/2, clientY = $('#canvasViewport').getBoundingClientRect().top + $('#canvasViewport').clientHeight/2) {
@@ -804,22 +822,23 @@
   function setupCanvasNavigation() {
     const viewport = $('#canvasViewport');
     const touches=new Map();let pinch=null;
-    viewport.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch'||(state.tool==='ink'&&performance.now()<(state.penActiveUntil||0)))return;touches.set(event.pointerId,{x:event.clientX,y:event.clientY});if(touches.size===2){const [a,b]=[...touches.values()],rect=viewport.getBoundingClientRect(),center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:state.view.zoom,worldX:(center.x-rect.left-state.view.x)/state.view.zoom,worldY:(center.y-rect.top-state.view.y)/state.view.zoom};state.pinchActive=true;if(state.tool==='ink'){state.cancelInkStroke?.();event.preventDefault();event.stopPropagation();}}},{capture:true});
+    viewport.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch'||(state.tool==='ink'&&performance.now()<(state.penActiveUntil||0)))return;touches.set(event.pointerId,{x:event.clientX,y:event.clientY});if(touches.size===2){const [a,b]=[...touches.values()],rect=viewport.getBoundingClientRect(),center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:state.view.zoom,worldX:(center.x-rect.left-state.view.x)/state.view.zoom,worldY:(center.y-rect.top-state.view.y)/state.view.zoom};state.pinchActive=true;beginCanvasMotion();if(state.tool==='ink'){state.cancelInkStroke?.();event.preventDefault();event.stopPropagation();}}},{capture:true});
     viewport.addEventListener('pointermove',event=>{if(!touches.has(event.pointerId))return;touches.set(event.pointerId,{x:event.clientX,y:event.clientY});if(pinch&&touches.size===2){event.preventDefault();if(state.tool==='ink')event.stopPropagation();const [a,b]=[...touches.values()],rect=viewport.getBoundingClientRect(),distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};state.view.zoom=clamp(pinch.zoom*distance/pinch.distance,.3,1.8);state.view.x=center.x-rect.left-pinch.worldX*state.view.zoom;state.view.y=center.y-rect.top-pinch.worldY*state.view.zoom;updateTransform();}},{capture:true});
-    const releaseTouch=event=>{touches.delete(event.pointerId);if(touches.size<2){const completedPinch=Boolean(pinch);pinch=null;state.pinchActive=false;if(completedPinch){clearTimeout(state.inkRenderTimer);state.inkRenderTimer=setTimeout(renderInk,90);updateInkCursor();}}};viewport.addEventListener('pointerup',releaseTouch,{capture:true});viewport.addEventListener('pointercancel',releaseTouch,{capture:true});
+    const releaseTouch=event=>{touches.delete(event.pointerId);if(touches.size<2){const completedPinch=Boolean(pinch);pinch=null;state.pinchActive=false;if(completedPinch){endCanvasMotion();clearTimeout(state.inkRenderTimer);state.inkRenderTimer=setTimeout(renderInk,90);updateInkCursor();}}};viewport.addEventListener('pointerup',releaseTouch,{capture:true});viewport.addEventListener('pointercancel',releaseTouch,{capture:true});
     viewport.addEventListener('wheel', event => {
       if(!event.ctrlKey){const scroller=event.target.closest('.format-bar,.secondary-format-bar,.secondary-block-list,#documentCard');if(scroller){if(scroller.matches('.format-bar,.secondary-format-bar')&&scroller.scrollWidth>scroller.clientWidth){event.preventDefault();scroller.scrollLeft+=event.deltaX||event.deltaY;return;}if(scroller.scrollHeight>scroller.clientHeight)return;}}
       event.preventDefault();
+      beginCanvasMotion();endCanvasMotion(140);
       if (event.ctrlKey) zoomAt(state.view.zoom * Math.exp(-event.deltaY*.0015),event.clientX,event.clientY);
       else { state.view.x -= event.deltaX; state.view.y -= event.deltaY; updateTransform(); }
     }, { passive:false });
     viewport.addEventListener('pointerdown', event => {
       const shouldPan = state.tool === 'pan' || event.button === 1 || (event.pointerType==='touch'&&state.tool!=='ink');
       if (!shouldPan || event.target.closest('button,input,textarea,a,[contenteditable],.menu-surface,.app-dialog') || (!state.readingMode&&event.target.closest('.document-card,.idea-node'))) return;
-      event.preventDefault(); state.panning = true; viewport.classList.add('panning'); viewport.setPointerCapture(event.pointerId);
+      event.preventDefault(); state.panning = true; beginCanvasMotion();viewport.classList.add('panning'); viewport.setPointerCapture(event.pointerId);
       const sx=event.clientX, sy=event.clientY, ox=state.view.x, oy=state.view.y;
       const move = pointer => { if(state.pinchActive)return;state.view.x=ox+pointer.clientX-sx; state.view.y=oy+pointer.clientY-sy; updateTransform(); };
-      const end = () => { state.panning=false; viewport.classList.remove('panning'); viewport.removeEventListener('pointermove',move); viewport.removeEventListener('pointerup',end); viewport.removeEventListener('pointercancel',end); };
+      const end = () => { state.panning=false; endCanvasMotion();viewport.classList.remove('panning'); viewport.removeEventListener('pointermove',move); viewport.removeEventListener('pointerup',end); viewport.removeEventListener('pointercancel',end); };
       viewport.addEventListener('pointermove',move); viewport.addEventListener('pointerup',end); viewport.addEventListener('pointercancel',end);
     });
     let coordinateFrame=0,coordinatePoint=null;
