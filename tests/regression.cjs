@@ -28,9 +28,9 @@ async function run() {
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest"'), 'Page declares its PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=4"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
-  assert.equal(manifest.short_name, 'Ramizom PowerMind');
+  assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
   assert(Array.isArray(manifest.icons) && manifest.icons.length > 0, 'Manifest declares install icons');
   const allowedPurposes = new Set(['any', 'maskable', 'monochrome']);
@@ -41,8 +41,8 @@ async function run() {
     assert(fs.existsSync(path.join(projectRoot, icon.src.split('?')[0].replace(/^\.\//, ''))), `Manifest icon file exists: ${icon.src}`);
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
-  assert(manifest.icons.some(icon => String(icon.purpose || '').includes('maskable') && String(icon.sizes).includes('512')), 'A 512px maskable icon backs OS icon masks');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png"'), 'Page declares an Apple touch icon');
+  assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=4"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -73,6 +73,8 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
+  assert(html.includes('manifest.webmanifest?v=4') && html.includes('style.css?v=4') && html.includes('app.js?v=4'), 'Updated app resources receive a cache version');
+  assert(css.includes('background:url("icon.svg?v=4")'), 'Startup and folder-gate marks reuse the rounded installed-app icon');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length, 'Static HTML IDs are unique');
   const localAssets = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(match => match[1].split('?')[0]).filter(value => value && !value.startsWith('#') && !/^[a-z]+:/i.test(value));

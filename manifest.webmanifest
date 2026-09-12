@@ -1,7 +1,7 @@
 {
   "id": "./",
   "name": "Ramizom PowerMind",
-  "short_name": "Ramizom PowerMind",
+  "short_name": "PowerMind",
   "description": "A visual note workspace for blocks, mind maps, and handwriting.",
   "start_url": "./",
   "scope": "./",
@@ -10,34 +10,22 @@
   "theme_color": "#f5eee9",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "icon.svg?v=4",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "icon-192.png",
+      "src": "icon-192.png?v=4",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512.png?v=4",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "icon-maskable-192.png?v=2",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icon-maskable-512.png?v=2",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }
