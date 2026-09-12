@@ -48,7 +48,7 @@ async function run() {
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=13"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=14"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
   assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -62,7 +62,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=13"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=14"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -89,7 +89,8 @@ async function run() {
   assert(html.includes('media="(prefers-color-scheme: dark)"'), 'A static theme colour follows the OS scheme before any script runs');
   assert(source.includes("meta.removeAttribute('media')"), 'The dynamic theme colour takes over the static metas');
   assert(source.includes('requestPersistentStorage'), 'Persistent storage is requested so a remembered folder handle is not evicted');
-  assert(source.includes('transaction.oncomplete'), 'Remembering the folder waits for the IndexedDB transaction to commit');
+  assert(source.includes("committed=this.finishStore(store,'Remember the folder');store.put(handle,'workspace-directory');await committed"), 'Remembering the folder writes before waiting for the IndexedDB transaction to commit');
+  assert(source.includes("committed=this.finishStore(store,'Forget the folder');store.delete('workspace-directory');await committed"), 'Forgetting a folder also mutates the active IndexedDB transaction before awaiting it');
   assert(source.includes("try{await storage.rememberHandle(directory);}catch"), 'A failed handle write cannot abort connecting a folder');
   assert(source.includes("state.mobileStage=isPortraitMobile()?(activeNote()?'editor':'notes'):'editor'"), 'Portrait launch opens the note itself, or the note list when there is no note');
   assert(!source.includes("?'workspace':'editor'"), 'Portrait launch no longer stops on the navigation drawer');
@@ -98,7 +99,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=13') && html.includes('style.css?v=13') && html.includes('app.js?v=13'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=14') && html.includes('style.css?v=14') && html.includes('app.js?v=14'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -119,6 +120,9 @@ async function run() {
   assert(source.includes('normalizePrintTextColors(scene)'), 'Print converts explicit white editor text for a light paper background');
   assert(css.includes('color-scheme:light') && css.includes('background:#fff!important'), 'Print cards use a theme-independent light paper palette');
   assert(source.includes('function resumeRememberedFolder()'), 'A remembered folder can be reopened without showing the picker');
+  assert(!source.includes('note.inkStrokes=normalizeLegacyInkErasers'), 'Workspace startup never performs a potentially blocking full ink migration');
+  assert(source.includes("if(permission!=='granted'){await storage.forgetHandle();state.recalledDirectoryHandle=null"), 'A rejected remembered-folder permission cannot trap the folder gate');
+  assert(source.includes("catch(error){console.error('Could not reopen remembered PowerMind folder',error);await storage.forgetHandle()"), 'An unavailable remembered folder falls back to a fresh folder choice');
   const editorMarkup = section('  function unifiedEditorBlockMarkup(', '  function openUnifiedSlashMenu(');
   assert(!editorMarkup.includes('secondary-block-handle') && !editorMarkup.includes('data-editor-delete'), 'Editor markup has no per-block drag or delete chrome');
   assert(!html.includes('id="openNotesMobile"') && !html.includes('id="openNav"'), 'Redundant hamburger buttons are removed');
@@ -163,6 +167,12 @@ async function run() {
   for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++)assert(boxes[i].x+boxes[i].width<=boxes[j].x||boxes[j].x+boxes[j].width<=boxes[i].x||boxes[i].y+boxes[i].height<=boxes[j].y||boxes[j].y+boxes[j].height<=boxes[i].y,'Editors do not overlap');
   vm.runInContext(section('  const storage = {', '  function seedDatabase()') + '\nthis.testStorage=storage;', context);
   await assert.rejects(context.testStorage.save({notes:[]}), /Choose a system folder/);
+  const handleOps=[],handleStore={transaction:{},put(){handleOps.push('put');},delete(){handleOps.push('delete');}};
+  context.testStorage.openHandleStore=async()=>handleStore;
+  context.testStorage.finishStore=()=>{handleOps.push('listen');return Promise.resolve().then(()=>handleOps.push('commit'));};
+  await context.testStorage.rememberHandle({name:'Notes'});
+  await context.testStorage.forgetHandle();
+  assert.deepEqual(handleOps,['listen','put','commit','listen','delete','commit'],'Folder handle transactions mutate before they complete');
   const makeDirectory=name=>{const entries=new Map();return{name,entries,queryPermission:async()=> 'granted',getDirectoryHandle:async(child,{create}={})=>{if(!entries.has(child)&&create)entries.set(child,makeDirectory(child));if(!entries.has(child))Object.assign(new Error('not found'),{name:'NotFoundError'});return entries.get(child);},getFileHandle:async(file,{create}={})=>{if(!entries.has(file)&&create)entries.set(file,{kind:'file',name:file,text:''});const record=entries.get(file);if(!record)throw Object.assign(new Error('not found'),{name:'NotFoundError'});return{getFile:async()=>({text:async()=>record.text}),createWritable:async()=>({write:async value=>{record.text=value;},close:async()=>{}})};},values:async function*(){for(const entry of entries.values())yield entry;},removeEntry:async key=>entries.delete(key)};};
   const directory=makeDirectory('Notes');context.state.directoryHandle=directory;
   const db={savedAt:20,notes:[{id:'recent',fileName:'Visible file',title:'Independent editor title'}],workspaces:[{id:'w'}],folders:[]};
@@ -184,8 +194,6 @@ async function run() {
   const untouched=context.eraseInkPath([inkLine],[{x:50,y:-2},{x:50,y:2}],1);
   assert.equal(untouched.changed,false,'Point eraser leaves nearby but untouched ink intact');
   assert.equal(untouched.strokes[0],inkLine,'Untouched strokes keep their original object and ordering');
-  const upgraded=context.normalizeLegacyInkErasers([inkLine,{id:'old-mask',mode:'eraser-pixel',size:1,points:[{x:5,y:-2},{x:5,y:2}]}]);
-  assert.equal(upgraded.some(stroke=>String(stroke.mode).startsWith('eraser')),false,'Vector-only notes migrate legacy eraser masks into stable stroke geometry');
   // --- Touch ink cost: Android gets a smaller buffer, Windows keeps the pen contract byte for byte ---
   assert(source.includes("function coarsePointer(){return matchMedia('(pointer:coarse)').matches;}"), 'Touch-only devices are identified through one shared helper');
   assert(source.includes("quality=canvas.id==='inkOverlay'?(touch?.6:1):clamp((window.devicePixelRatio||1)*state.view.zoom,1,touch?1:1.25)"), 'Touch devices cap the ink buffer at 1:1 while pen devices keep the sharper 1.25 cap');

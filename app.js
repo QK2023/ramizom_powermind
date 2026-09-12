@@ -107,8 +107,8 @@
     openHandleStore(mode='readonly') {
       return new Promise((resolve,reject)=>{if(!window.indexedDB)return reject(new Error('IndexedDB unavailable'));const request=indexedDB.open(this.handleDb,1);request.onupgradeneeded=()=>request.result.createObjectStore('handles');request.onerror=()=>reject(request.error);request.onsuccess=()=>resolve(request.result.transaction('handles',mode).objectStore('handles'));});
     },
-    async rememberHandle(handle){const store=await this.openHandleStore('readwrite');await this.finishStore(store,'Remember the folder');store.put(handle,'workspace-directory');},
-    async forgetHandle(){try{const store=await this.openHandleStore('readwrite');await this.finishStore(store,'Forget the folder');store.delete('workspace-directory');}catch{}},
+    async rememberHandle(handle){const store=await this.openHandleStore('readwrite'),committed=this.finishStore(store,'Remember the folder');store.put(handle,'workspace-directory');await committed;},
+    async forgetHandle(){try{const store=await this.openHandleStore('readwrite'),committed=this.finishStore(store,'Forget the folder');store.delete('workspace-directory');await committed;}catch{}},
     // Resolves only once the IndexedDB transaction has actually committed. Chrome can drop a
     // still-pending transaction when a page is suspended or killed, which on mobile showed up
     // as "I have to choose my folder again every time".
@@ -209,7 +209,7 @@
         note.ideas.forEach(idea=>{const seen=new Set([idea.id]);let parent=byId.get(idea.parentId);while(parent){if(seen.has(parent.id)){idea.parentId=root&&root!==idea?root.id:null;break;}seen.add(parent.id);parent=byId.get(parent.parentId);}});
         const blockTypes=new Set(['text','heading1','heading','heading3','todo','bullets','quote','code','divider','formula','image']);
         [...note.blocks,...note.editors.flatMap(editor=>editor.blocks)].forEach(block=>{if(!blockTypes.has(block.type))block.type='text';block.text=String(block.text||'');if(block.html)block.html=sanitizeRichHtml(String(block.html));if(block.type==='image'){block.src=safeDataImage(block.src);if(!block.src){block.type='text';block.text='';delete block.src;}}if(block.color&&!/^#[0-9a-f]{6}$/i.test(block.color))delete block.color;});
-        note.ink=safeDataImage(note.ink)||null;if(!note.ink)note.inkStrokes=normalizeLegacyInkErasers(note.inkStrokes);
+        note.ink=safeDataImage(note.ink)||null;
         note.card.x=Number.isFinite(note.card.x)?note.card.x:620;note.card.y=Number.isFinite(note.card.y)?note.card.y:420;
       });
       return source;
@@ -642,7 +642,6 @@
   function pointNearEraserPath(point,pathOrIndex,radius){const index=Array.isArray(pathOrIndex)?indexEraserPath(pathOrIndex,radius):pathOrIndex;for(const item of eraserCandidates(index,point.x-radius,point.y-radius,point.x+radius,point.y+radius)){const[a,b]=index.segments[item];if(pointSegmentDistance(point,a,b)<=radius)return true;}return false;}
   function segmentNearEraserPath(a,b,index,radius){for(const item of eraserCandidates(index,Math.min(a.x,b.x)-radius,Math.min(a.y,b.y)-radius,Math.max(a.x,b.x)+radius,Math.max(a.y,b.y)+radius)){const[c,d]=index.segments[item];if(segmentDistance(a,b,c,d)<=radius)return true;}return false;}
   function eraseInkPath(strokes,path,radius){let changed=false;const result=[],pathIndex=indexEraserPath(path,radius);(strokes||[]).forEach(stroke=>{if(String(stroke.mode).startsWith('eraser')||!stroke.points?.length){result.push(stroke);return;}const strokeRadius=(Number(stroke.size)||1)*(stroke.mode==='highlighter'?1.8:.75),hitRadius=radius+strokeRadius,fragments=[];let fragment=[],strokeChanged=false;stroke.points.forEach((point,index)=>{const near=pointNearEraserPath(point,pathIndex,hitRadius),crossed=index>0&&segmentNearEraserPath(stroke.points[index-1],point,pathIndex,hitRadius);if(near||crossed){strokeChanged=changed=true;if(fragment.length){fragments.push(fragment);fragment=[];}if(crossed&&!near)fragment.push(point);}else fragment.push(point);});if(fragment.length)fragments.push(fragment);if(!strokeChanged){result.push(stroke);return;}fragments.filter(points=>points.length>1||(stroke.points.length===1&&points.length)).forEach((points,index)=>result.push({...stroke,id:index?id():stroke.id,points}));});return{changed,strokes:result};}
-  function normalizeLegacyInkErasers(strokes){let result=[];(strokes||[]).forEach(stroke=>{if(['eraser','eraser-pixel'].includes(stroke.mode)){result=eraseInkPath(result,stroke.points||[],inkEraserRadius('eraser-pixel',Number(stroke.size)||3)).strokes;}else if(stroke.mode!=='eraser-stroke')result.push(stroke);});return result;}
 
   function setupInkSelectionUI(){
     const box=$('#inkSelectionBox');let drag=null,frame=0;
@@ -957,12 +956,12 @@
     const directory=state.recalledDirectoryHandle;if(!directory)return connectDataFolder();
     try{
       const permission=await directory.requestPermission?.({mode:'readwrite'});
-      if(permission!=='granted')return;
+      if(permission!=='granted'){await storage.forgetHandle();state.recalledDirectoryHandle=null;state.recalledDirectoryName='';updateStorageLabel();toast(t('folderRequired'));return;}
       const existing=await storage.loadDirectory(directory);
       state.directoryHandle=directory;state.directoryName=directory.name||state.recalledDirectoryName;state.recalledDirectoryHandle=null;state.recalledDirectoryName='';
       state.db=migrateDatabase(existing);restoreLastOpen();state.history=[];state.future=[];
       renderAll();updateStorageLabel();toast(t('folderConnected'));
-    }catch(error){console.error('Could not reopen remembered PowerMind folder',error);toast(error.message||t('folderRequired'));}
+    }catch(error){console.error('Could not reopen remembered PowerMind folder',error);await storage.forgetHandle();state.recalledDirectoryHandle=null;state.recalledDirectoryName='';updateStorageLabel();toast(error.message||t('folderRequired'));}
   }
   async function closeDataFolder(){try{await state.saveQueue;}catch{}await storage.forgetHandle();state.directoryHandle=null;state.directoryName='';state.db=migrateDatabase(null);state.workspaceId=state.db.workspaces[0]?.id;state.noteId=state.db.notes[0]?.id||null;state.history=[];state.future=[];$('#settingsDialog').close();renderAll();updateStorageLabel();}
   function toast(message){const element=$('#toast');element.textContent=message;element.classList.add('show');clearTimeout(element.timer);element.timer=setTimeout(()=>element.classList.remove('show'),2200);}
