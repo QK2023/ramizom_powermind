@@ -28,7 +28,7 @@ async function run() {
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=4"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=5"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
   assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -42,7 +42,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=4"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=5"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -53,6 +53,11 @@ async function run() {
   assert(source.includes("typeof window.showDirectoryPicker === 'function'"), 'Storage support is detected before the app boots');
   assert(source.includes("location.protocol === 'file:'"), 'Opening the app from file:// is treated as unsupported');
   assert(source.includes('function flushPendingSave('), 'A pending debounced save can be flushed on demand');
+  assert(source.includes('state.changeRevision>state.savedRevision'), 'Exiting also queues a save when the newest revision is still pending');
+  assert(source.includes('if(revision===state.changeRevision)'), 'Saved status is shown only after the current edit revision reaches disk');
+  assert(source.includes('function restoreLastOpen()'), 'The last opened workspace and note are restored deterministically');
+  assert(source.includes('lastOpened:db.lastOpened||null'), 'The current workspace and note are also written with the folder manifest');
+  assert(source.includes('async saveLastOpened(lastOpened)'), 'Changing notes writes the last-opened location back to the workspace manifest');
   assert(source.includes("document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushPendingSave();})"), 'Burying the page flushes the pending save');
   assert(source.includes("addEventListener('pagehide',flushPendingSave)"), 'Tearing down the page flushes the pending save');
   assert(source.includes('state.saveTimer=setTimeout(()=>{state.saveTimer=null;scheduleSave(true);},450)'), 'The save debounce clears its own timer so a flush can detect pending work');
@@ -73,8 +78,8 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=4') && html.includes('style.css?v=4') && html.includes('app.js?v=4'), 'Updated app resources receive a cache version');
-  assert(css.includes('background:url("icon.svg?v=4")'), 'Startup and folder-gate marks reuse the rounded installed-app icon');
+  assert(html.includes('manifest.webmanifest?v=5') && html.includes('style.css?v=5') && html.includes('app.js?v=5'), 'Updated app resources receive a cache version');
+  assert(css.includes('background:url("icon.svg?v=5")'), 'Startup and folder-gate marks reuse the rounded installed-app icon');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length, 'Static HTML IDs are unique');
   const localAssets = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(match => match[1].split('?')[0]).filter(value => value && !value.startsWith('#') && !/^[a-z]+:/i.test(value));

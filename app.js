@@ -30,6 +30,8 @@
     history: [],
     future: [],
     saveTimer: null,
+    changeRevision: 0,
+    savedRevision: 0,
     selectedObject: null,
     formulaEdit: { target:'document', id:null },
     savedRange: null,
@@ -119,7 +121,7 @@
       const notesDirectory=await directory.getDirectoryHandle('notes');
       const notes=[];
       for(const entry of manifest.noteFiles){if(!entry?.file||!entry.file.endsWith('.powermind.json'))continue;const note=await this.readJson(notesDirectory,entry.file);if(note&&note.id===entry.id)notes.push(note);}
-      return {version:3,savedAt:manifest.savedAt,workspaces:manifest.workspaces||[],folders:manifest.folders||[],notes};
+      return {version:3,savedAt:manifest.savedAt,lastOpened:manifest.lastOpened||null,workspaces:manifest.workspaces||[],folders:manifest.folders||[],notes};
     },
     async loadLegacy(){const candidates=[];for(const key of ['ramizom.powermind.v3','ramizom.powermind.v3.backup','ramizom.powermind.data.v1']){try{const value=this.parse(localStorage.getItem(key));if(value)candidates.push(value);}catch{}}const valid=candidates.filter(value=>Array.isArray(value.notes)&&Array.isArray(value.workspaces));valid.sort((a,b)=>(Number(b.savedAt)||0)-(Number(a.savedAt)||0));if(valid[0])state.legacyData=true;return valid[0]||null;},
     async restore() {
@@ -138,8 +140,16 @@
       const filePart=value=>String(value||'Untitled').normalize('NFKC').replace(/[<>:"/\\|?*\x00-\x1F]/g,' ').replace(/[. ]+$/g,'').trim().slice(0,54)||'Untitled';
       for(const note of db.notes){const workspace=db.workspaces.find(item=>item.id===note.workspaceId),folder=db.folders.find(item=>item.id===note.folderId),file=`${filePart(workspace?.name)} - ${filePart(folder?.name)} - ${filePart(note.fileName||'Untitled')} -- ${String(note.id).replace(/[^A-Za-z0-9_-]/g,'_').slice(0,8)}.powermind.json`;await this.writeJson(notesDirectory,file,note);noteFiles.push({id:note.id,file});}
       const keep=new Set(noteFiles.map(item=>item.file));if(notesDirectory.values)for await(const entry of notesDirectory.values()){if(entry.kind==='file'&&entry.name.endsWith('.powermind.json')&&!keep.has(entry.name))await notesDirectory.removeEntry(entry.name);}
-      await this.writeJson(directory,this.manifest,{app:'Ramizom PowerMind',format:'folder-workspace',version:1,savedAt:db.savedAt||Date.now(),workspaces:db.workspaces,folders:db.folders,noteFiles});
+      await this.writeJson(directory,this.manifest,{app:'Ramizom PowerMind',format:'folder-workspace',version:1,savedAt:db.savedAt||Date.now(),lastOpened:db.lastOpened||null,workspaces:db.workspaces,folders:db.folders,noteFiles});
       updateStorageLabel();
+    },
+    async saveLastOpened(lastOpened){
+      const directory=state.directoryHandle;if(!directory)return;
+      if(await directory.queryPermission?.({mode:'readwrite'})!=='granted')return;
+      const manifest=await this.readJson(directory,this.manifest);
+      if(manifest.app!=='Ramizom PowerMind'||!Array.isArray(manifest.noteFiles))return;
+      manifest.lastOpened=lastOpened||null;
+      await this.writeJson(directory,this.manifest,manifest);
     },
     async clearLegacy(){for(const key of ['ramizom.powermind.v3','ramizom.powermind.v3.backup','ramizom.powermind.data.v1'])try{localStorage.removeItem(key);}catch{}try{const root=await navigator.storage?.getDirectory?.();for(const name of ['powermind-v3.json','powermind-v3.backup.json'])try{await root.removeEntry(name);}catch{}}catch{}state.legacyData=false;}
   };
@@ -248,6 +258,26 @@
     return !state.search || haystack.includes(state.search.toLowerCase());
   }
 
+  function rememberLastOpen(){
+    if(!state.db)return;
+    state.db.lastOpened={workspaceId:state.workspaceId||null,noteId:state.noteId||null};
+    try{localStorage.setItem('pm.lastOpened',JSON.stringify(state.db.lastOpened));}catch{/* Navigation preference is optional. */}
+  }
+  function queueLastOpenSave(){
+    if(!state.directoryHandle||!state.db?.lastOpened)return;
+    const lastOpened=clone(state.db.lastOpened);
+    state.saveQueue=state.saveQueue.catch(()=>{}).then(()=>storage.saveLastOpened(lastOpened)).catch(error=>console.warn('PowerMind could not save the last opened note',error));
+  }
+  function restoreLastOpen(){
+    let remembered=state.db?.lastOpened;
+    if(!remembered)try{remembered=storage.parse(localStorage.getItem('pm.lastOpened'));}catch{/* Use the deterministic fallback below. */}
+    const workspace=state.db.workspaces.find(item=>item.id===remembered?.workspaceId)||state.db.workspaces[0]||null;
+    state.workspaceId=workspace?.id||null;
+    const note=state.db.notes.find(item=>item.id===remembered?.noteId&&item.workspaceId===state.workspaceId&&!item.trashed)||state.db.notes.find(item=>item.workspaceId===state.workspaceId&&!item.trashed)||null;
+    state.noteId=note?.id||null;
+    rememberLastOpen();
+  }
+
   function openFolderMenu(folderId,anchor,x=null,y=null){
     const folder=state.db.folders.find(item=>item.id===folderId);if(!folder)return;
     const menu=$('#workspaceMenu');menu.innerHTML=`<button data-folder-action="rename">${t('rename')}</button><button data-folder-action="delete" class="danger">${t('permanentlyDelete')}</button>`;
@@ -321,6 +351,8 @@
 
   function selectNote(noteId, preserveHistory=false) {
     state.noteId = noteId;
+    rememberLastOpen();
+    queueLastOpenSave();
     if(!preserveHistory){state.history=[];state.future=[];}state.selectedObject = null;
     const note = activeNote();
     if (!note) return;
@@ -801,6 +833,7 @@
 
   function markChanged() {
     const note=activeNote(); if(!note)return; note.updated=Date.now();
+    state.changeRevision++;
     $('#saveState').classList.add('saving'); $('#saveState span').textContent=t('saving');
     clearTimeout(state.saveTimer); state.saveTimer=setTimeout(()=>{state.saveTimer=null;scheduleSave(true);},450);
   }
@@ -808,10 +841,14 @@
   // hidden or torn down, so leaving the app cannot swallow the last edit. createWritable()
   // streams into a temporary file that close() swaps in, so an interrupted flush cannot
   // corrupt an existing note file.
-  function flushPendingSave(){if(state.saveTimer==null)return;clearTimeout(state.saveTimer);state.saveTimer=null;scheduleSave(true);}
+  function flushPendingSave(){
+    rememberLastOpen();
+    if(state.saveTimer!=null){clearTimeout(state.saveTimer);state.saveTimer=null;scheduleSave(true);return;}
+    if(state.changeRevision>state.savedRevision)scheduleSave(true);
+  }
   async function scheduleSave(refresh=false) {
-    state.db.savedAt=Date.now();const snapshot=clone(state.db);state.saveQueue=state.saveQueue.catch(()=>{}).then(()=>storage.save(snapshot));
-    try{await state.saveQueue;$('#saveState').classList.remove('saving');$('#saveState span').textContent=t('saved');if(refresh){renderNavigation();renderNoteList();const note=activeNote();if(note)$('#breadcrumb').textContent=`${activeWorkspace()?.name}  /  ${folderName(note.folderId)}  /  ${noteName(note)}`;}}catch(error){console.error('PowerMind save failed',error);$('#saveState').classList.remove('saving');$('#saveState span').textContent=error?.code==='NO_DIRECTORY'?t('chooseFolder'):t('saveFailed');}
+    rememberLastOpen();state.db.savedAt=Date.now();const revision=state.changeRevision,snapshot=clone(state.db);state.saveQueue=state.saveQueue.catch(()=>{}).then(()=>storage.save(snapshot));
+    try{await state.saveQueue;state.savedRevision=Math.max(state.savedRevision,revision);if(revision===state.changeRevision){$('#saveState').classList.remove('saving');$('#saveState span').textContent=t('saved');}if(refresh){renderNavigation();renderNoteList();const note=activeNote();if(note)$('#breadcrumb').textContent=`${activeWorkspace()?.name}  /  ${folderName(note.folderId)}  /  ${noteName(note)}`;}}catch(error){console.error('PowerMind save failed',error);if(revision===state.changeRevision){$('#saveState').classList.remove('saving');$('#saveState span').textContent=error?.code==='NO_DIRECTORY'?t('chooseFolder'):t('saveFailed');}}
   }
 
   function openMenu(menu,x,y){closeMenus();menu.classList.add('open');menu.style.left=`${Math.max(8,Math.min(x,innerWidth-menu.offsetWidth-8))}px`;menu.style.top=`${Math.max(8,Math.min(y,innerHeight-menu.offsetHeight-8))}px`;}
@@ -885,7 +922,7 @@
       const switching=state.directoryHandle?!(await state.directoryHandle.isSameEntry?.(directory)):state.legacyData;if(existing&&switching&&!confirm(t('openExistingFolder')))return;
       state.directoryHandle=directory;state.directoryName=directory.name;try{await storage.rememberHandle(directory);}catch(error){console.warn('PowerMind could not remember the folder',error);}requestPersistentStorage();
       state.recalledDirectoryHandle=null;state.recalledDirectoryName='';
-      if(existing){state.db=migrateDatabase(existing);state.workspaceId=state.db.workspaces[0]?.id;state.noteId=state.db.notes.find(note=>note.workspaceId===state.workspaceId&&!note.trashed)?.id||null;state.history=[];state.future=[];renderAll();}
+      if(existing){state.db=migrateDatabase(existing);restoreLastOpen();state.history=[];state.future=[];renderAll();}
       else await scheduleSave(true);
       await storage.clearLegacy();updateStorageLabel();$('#settingsDialog')?.close();toast(t('folderConnected'));
     }catch(error){if(error?.name!=='AbortError'){console.error('Could not open PowerMind folder',error);toast(error.message||t('folderRequired'));}}
@@ -897,7 +934,7 @@
       if(permission!=='granted')return;
       const existing=await storage.loadDirectory(directory);
       state.directoryHandle=directory;state.directoryName=directory.name||state.recalledDirectoryName;state.recalledDirectoryHandle=null;state.recalledDirectoryName='';
-      state.db=migrateDatabase(existing);state.workspaceId=state.db.workspaces[0]?.id;state.noteId=state.db.notes.find(note=>note.workspaceId===state.workspaceId&&!note.trashed)?.id||null;state.history=[];state.future=[];
+      state.db=migrateDatabase(existing);restoreLastOpen();state.history=[];state.future=[];
       renderAll();updateStorageLabel();toast(t('folderConnected'));
     }catch(error){console.error('Could not reopen remembered PowerMind folder',error);toast(error.message||t('folderRequired'));}
   }
@@ -1163,8 +1200,7 @@
   async function init() {
     try{localStorage.removeItem('pm.wallpaper');}catch{/* Remove the retired setting when storage is available. */}
     state.db=migrateDatabase(await storage.restore());
-    state.workspaceId=state.db.workspaces[0]?.id;
-    state.noteId=state.db.notes.find(note=>note.workspaceId===state.workspaceId&&!note.trashed)?.id||null;
+    restoreLastOpen();
     applyTheme();applyAccent();applyBodyFontSize();
     if(!storageSupported()){showUnsupportedGate();dismissStartupSplash();return;}
     requestPersistentStorage();
