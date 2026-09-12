@@ -209,7 +209,7 @@
         note.ideas.forEach(idea=>{const seen=new Set([idea.id]);let parent=byId.get(idea.parentId);while(parent){if(seen.has(parent.id)){idea.parentId=root&&root!==idea?root.id:null;break;}seen.add(parent.id);parent=byId.get(parent.parentId);}});
         const blockTypes=new Set(['text','heading1','heading','heading3','todo','bullets','quote','code','divider','formula','image']);
         [...note.blocks,...note.editors.flatMap(editor=>editor.blocks)].forEach(block=>{if(!blockTypes.has(block.type))block.type='text';block.text=String(block.text||'');if(block.html)block.html=sanitizeRichHtml(String(block.html));if(block.type==='image'){block.src=safeDataImage(block.src);if(!block.src){block.type='text';block.text='';delete block.src;}}if(block.color&&!/^#[0-9a-f]{6}$/i.test(block.color))delete block.color;});
-        note.ink=safeDataImage(note.ink)||null;
+        note.ink=safeDataImage(note.ink)||null;if(!note.ink)note.inkStrokes=normalizeLegacyInkErasers(note.inkStrokes);
         note.card.x=Number.isFinite(note.card.x)?note.card.x:620;note.card.y=Number.isFinite(note.card.y)?note.card.y:420;
       });
       return source;
@@ -633,6 +633,16 @@
   }
 
   function pointInPolygon(point,polygon){let inside=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){const a=polygon[i],b=polygon[j],cross=(a.y>point.y)!==(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y||Number.EPSILON)+a.x;if(cross)inside=!inside;}return inside;}
+  function pointSegmentDistance(point,a,b){const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;if(!length)return Math.hypot(point.x-a.x,point.y-a.y);const amount=clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/length,0,1),x=a.x+dx*amount,y=a.y+dy*amount;return Math.hypot(point.x-x,point.y-y);}
+  function segmentDistance(a,b,c,d){const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x),ab1=cross(a,b,c),ab2=cross(a,b,d),cd1=cross(c,d,a),cd2=cross(c,d,b),boxesOverlap=Math.max(Math.min(a.x,b.x),Math.min(c.x,d.x))<=Math.min(Math.max(a.x,b.x),Math.max(c.x,d.x))&&Math.max(Math.min(a.y,b.y),Math.min(c.y,d.y))<=Math.min(Math.max(a.y,b.y),Math.max(c.y,d.y));if(boxesOverlap&&((ab1<=0&&ab2>=0)||(ab1>=0&&ab2<=0))&&((cd1<=0&&cd2>=0)||(cd1>=0&&cd2<=0)))return 0;return Math.min(pointSegmentDistance(a,c,d),pointSegmentDistance(b,c,d),pointSegmentDistance(c,a,b),pointSegmentDistance(d,a,b));}
+  function inkEraserRadius(mode,size){return mode==='eraser-stroke'?Math.max(10,size*3.2):Math.max(4,size*2.5);}
+  function strokeNearPoint(stroke,point,radius){const points=stroke.points||[];if(points.some(item=>Math.hypot(item.x-point.x,item.y-point.y)<=radius))return true;for(let index=1;index<points.length;index++)if(pointSegmentDistance(point,points[index-1],points[index])<=radius)return true;return false;}
+  function indexEraserPath(path,radius){const cellSize=Math.max(12,radius*3),segments=path.length>1?path.slice(1).map((point,index)=>[path[index],point]):path.length?[[path[0],path[0]]]:[],cells=new Map();segments.forEach((segment,index)=>{const[a,b]=segment,left=Math.floor((Math.min(a.x,b.x)-radius)/cellSize),right=Math.floor((Math.max(a.x,b.x)+radius)/cellSize),top=Math.floor((Math.min(a.y,b.y)-radius)/cellSize),bottom=Math.floor((Math.max(a.y,b.y)+radius)/cellSize);for(let x=left;x<=right;x++)for(let y=top;y<=bottom;y++){const key=`${x}:${y}`,bucket=cells.get(key)||[];bucket.push(index);cells.set(key,bucket);}});return{cellSize,segments,cells};}
+  function eraserCandidates(index,left,top,right,bottom){const found=new Set(),size=index.cellSize;for(let x=Math.floor(left/size);x<=Math.floor(right/size);x++)for(let y=Math.floor(top/size);y<=Math.floor(bottom/size);y++)(index.cells.get(`${x}:${y}`)||[]).forEach(item=>found.add(item));return found;}
+  function pointNearEraserPath(point,pathOrIndex,radius){const index=Array.isArray(pathOrIndex)?indexEraserPath(pathOrIndex,radius):pathOrIndex;for(const item of eraserCandidates(index,point.x-radius,point.y-radius,point.x+radius,point.y+radius)){const[a,b]=index.segments[item];if(pointSegmentDistance(point,a,b)<=radius)return true;}return false;}
+  function segmentNearEraserPath(a,b,index,radius){for(const item of eraserCandidates(index,Math.min(a.x,b.x)-radius,Math.min(a.y,b.y)-radius,Math.max(a.x,b.x)+radius,Math.max(a.y,b.y)+radius)){const[c,d]=index.segments[item];if(segmentDistance(a,b,c,d)<=radius)return true;}return false;}
+  function eraseInkPath(strokes,path,radius){let changed=false;const result=[],pathIndex=indexEraserPath(path,radius);(strokes||[]).forEach(stroke=>{if(String(stroke.mode).startsWith('eraser')||!stroke.points?.length){result.push(stroke);return;}const strokeRadius=(Number(stroke.size)||1)*(stroke.mode==='highlighter'?1.8:.75),hitRadius=radius+strokeRadius,fragments=[];let fragment=[],strokeChanged=false;stroke.points.forEach((point,index)=>{const near=pointNearEraserPath(point,pathIndex,hitRadius),crossed=index>0&&segmentNearEraserPath(stroke.points[index-1],point,pathIndex,hitRadius);if(near||crossed){strokeChanged=changed=true;if(fragment.length){fragments.push(fragment);fragment=[];}if(crossed&&!near)fragment.push(point);}else fragment.push(point);});if(fragment.length)fragments.push(fragment);if(!strokeChanged){result.push(stroke);return;}fragments.filter(points=>points.length>1||(stroke.points.length===1&&points.length)).forEach((points,index)=>result.push({...stroke,id:index?id():stroke.id,points}));});return{changed,strokes:result};}
+  function normalizeLegacyInkErasers(strokes){let result=[];(strokes||[]).forEach(stroke=>{if(['eraser','eraser-pixel'].includes(stroke.mode)){result=eraseInkPath(result,stroke.points||[],inkEraserRadius('eraser-pixel',Number(stroke.size)||3)).strokes;}else if(stroke.mode!=='eraser-stroke')result.push(stroke);});return result;}
 
   function setupInkSelectionUI(){
     const box=$('#inkSelectionBox');let drag=null,frame=0;
@@ -651,7 +661,7 @@
     const points = stroke.points || [];
     if (!points.length) return;
     context.save();
-    if(stroke.mode==='eraser-stroke')return;
+    if(stroke.mode==='eraser-stroke'){context.restore();return;}
     context.globalCompositeOperation = (stroke.mode === 'eraser'||stroke.mode==='eraser-pixel') ? 'destination-out' : 'source-over';
     context.globalAlpha = stroke.mode === 'highlighter' ? .16 : 1;
     const resolvedColor=resolveInkColor(stroke.color,darkForAutoColor);context.strokeStyle=resolvedColor;
@@ -660,7 +670,7 @@
     if (points.length === 1) {
       context.fillStyle=resolvedColor;
       if(stroke.mode==='highlighter'){const side=Math.max(3,stroke.size*3.6);context.fillRect(points[0].x-side/2,points[0].y-side/2,side,side);}
-      else{context.beginPath(); context.arc(points[0].x,points[0].y,Math.max(1,stroke.size/2),0,Math.PI*2); context.fill();}
+      else{const radius=(stroke.mode==='eraser'||stroke.mode==='eraser-pixel')?inkEraserRadius(stroke.mode,stroke.size):Math.max(1,stroke.size/2);context.beginPath(); context.arc(points[0].x,points[0].y,radius,0,Math.PI*2); context.fill();}
     }
     for (let index=Math.max(1,fromIndex); index<points.length; index++) {
       const previous=points[index-1], current=points[index];
@@ -702,9 +712,10 @@
     const nearest=candidates[edgeIndex];if(!state.guideSnap&&Math.hypot(local.x-nearest.x,local.y-nearest.y)>snapDistance)return next;state.guideSnap={type:'triangle',edge:edgeIndex};return world(nearest);
   }
 
-  function eraseWholeStrokeAt(next){const note=activeNote(),radius=Math.max(10,state.pen.size*3.2),before=note.inkStrokes.length;note.inkStrokes=note.inkStrokes.filter(item=>!item.points?.some(point=>Math.hypot(point.x-next.x,point.y-next.y)<=radius));return before!==note.inkStrokes.length;}
+  function eraseWholeStrokeAt(next){const note=activeNote(),radius=inkEraserRadius('eraser-stroke',state.pen.size),before=note.inkStrokes.length;note.inkStrokes=note.inkStrokes.filter(item=>String(item.mode).startsWith('eraser')||!strokeNearPoint(item,next,radius+(item.size||1)/2));return before!==note.inkStrokes.length;}
+  function canEraseWholeStrokeAt(next,size=state.pen.size){const radius=inkEraserRadius('eraser-stroke',size);return(activeNote()?.inkStrokes||[]).some(item=>!String(item.mode).startsWith('eraser')&&strokeNearPoint(item,next,radius+(item.size||1)/2));}
 
-  function updateInkCursor(event){const cursor=$('#inkCursor');if(!cursor)return;const erasing=state.pen.mode.startsWith('eraser'),color=resolveInkColor(state.pen.color);cursor.style.setProperty('--ink-cursor-color',color);cursor.style.setProperty('--ink-cursor-size',`${clamp((erasing?state.pen.size*2.4:state.pen.size),4,18)}px`);cursor.classList.toggle('eraser',erasing);if(event){const rect=$('#canvasViewport').getBoundingClientRect();cursor.style.left=`${event.clientX-rect.left}px`;cursor.style.top=`${event.clientY-rect.top}px`;cursor.classList.toggle('show',state.tool==='ink'&&event.pointerType==='mouse');}}
+  function updateInkCursor(event){const cursor=$('#inkCursor');if(!cursor)return;const erasing=state.pen.mode.startsWith('eraser'),color=resolveInkColor(state.pen.color),diameter=erasing?inkEraserRadius(state.pen.mode,state.pen.size)*2*state.view.zoom:state.pen.size*state.view.zoom;cursor.style.setProperty('--ink-cursor-color',color);cursor.style.setProperty('--ink-cursor-size',`${clamp(diameter,4,54)}px`);cursor.classList.toggle('eraser',erasing);if(event){const rect=$('#canvasViewport').getBoundingClientRect();cursor.style.left=`${event.clientX-rect.left}px`;cursor.style.top=`${event.clientY-rect.top}px`;cursor.classList.toggle('show',state.tool==='ink'&&event.pointerType==='mouse');}}
   function setupInkCursor(){const viewport=$('#canvasViewport'),cursor=$('#inkCursor');viewport.addEventListener('pointermove',event=>{if(event.pointerType==='mouse')updateInkCursor(event);},{passive:true});viewport.addEventListener('pointerleave',()=>cursor.classList.remove('show'));viewport.addEventListener('pointercancel',()=>cursor.classList.remove('show'));}
 
   function setupInk() {
@@ -713,35 +724,39 @@
       const rect=inkCanvasRect||(inkCanvasRect=canvas.getBoundingClientRect());
       return { x:(event.clientX-rect.left)/state.view.zoom, y:(event.clientY-rect.top)/state.view.zoom, p:event.pressure > 0 ? event.pressure : .5 };
     };
-    let context=inkContext(canvas),stroke=null,pointerId=null,lastEventTime=-1,lastPenSeen=-Infinity,strokeErased=false,strokeTouch=false;
-    const requestedMode=event=>event.pointerType==='pen'&&((event.button===5||(event.buttons&32))?'eraser-stroke':(event.button===2||(event.buttons&2))?(localStorage.getItem('pm.penButtonAction')||'lasso'):null);
-    canvas.addEventListener('pointerover',event=>{if(event.pointerType==='pen')lastPenSeen=performance.now();},{passive:true});
+    let context=inkContext(canvas),stroke=null,pointerId=null,lastEventTime=-1,lastPenSeen=-Infinity,strokeErased=false,strokeTouch=false,eraseCheckpointed=false,eraseFrame=0;
+    const requestEraseRender=()=>{if(eraseFrame)return;eraseFrame=requestAnimationFrame(()=>{eraseFrame=0;renderInk();});};
+    const notePenActivity=()=>{lastPenSeen=performance.now();state.penActiveUntil=lastPenSeen+1800;};
+    state.cancelInkStroke=()=>{if(!state.drawing)return;if(eraseFrame){cancelAnimationFrame(eraseFrame);eraseFrame=0;}const changed=strokeErased;state.drawing=false;try{if(pointerId!=null&&canvas.hasPointerCapture(pointerId))canvas.releasePointerCapture(pointerId);}catch{}stroke=null;pointerId=null;state.guideSnap=null;if(changed)markChanged();renderInk();};
+    const requestedMode=event=>{if(event.pointerType!=='pen')return null;if(event.button===5||(event.buttons&32))return'eraser-stroke';if(event.button===2||(event.buttons&2))return(localStorage.getItem('pm.penButtonAction')||'lasso')==='eraser'?'eraser-stroke':'lasso';return null;};
+    canvas.addEventListener('pointerover',event=>{if(event.pointerType==='pen')notePenActivity();},{passive:true});
     canvas.addEventListener('pointerdown', event => {
-      if(event.pointerType==='pen')lastPenSeen=performance.now();
+      if(event.pointerType==='pen')notePenActivity();
       // A finger contact reports ~40-90 CSS px of contact width (Chrome scales the Android touch ellipse up), so the old flat 24px limit rejected virtually every finger stroke. Touch-only devices therefore only ignore a genuine palm/heel (>140) and keep the pen-priority window; pen-first devices (Windows) keep the original 24px rule untouched.
       const coarse=coarsePointer(),palmLimit=coarse?140:24;
       if (state.tool !== 'ink'||state.drawing||(event.pointerType==='touch'&&(performance.now()-lastPenSeen<1800||Math.max(event.width||0,event.height||0)>palmLimit))||(event.pointerType!=='pen'&&event.button!==0)) return;
       event.preventDefault();event.stopPropagation();state.drawing=true;pointerId=event.pointerId;lastEventTime=-1;strokeTouch=coarse;state.guideSnap=null;inkCanvasRect=canvas.getBoundingClientRect();
-      const mode=requestedMode(event)||state.pen.mode;strokeErased=false;stroke={id:id(),mode,color:state.pen.color,size:state.pen.size,points:[constrainInkPoint(point(event))],temporary:mode!==state.pen.mode};if(mode==='eraser-stroke'){checkpoint();strokeErased=eraseWholeStrokeAt(stroke.points[0]);if(strokeErased)renderInk();}
+      const mode=requestedMode(event)||state.pen.mode;strokeErased=false;eraseCheckpointed=false;stroke={id:id(),mode,color:state.pen.color,size:state.pen.size,points:[constrainInkPoint(point(event))],temporary:mode!==state.pen.mode};if(mode==='eraser-stroke'){if(canEraseWholeStrokeAt(stroke.points[0],stroke.size)){checkpoint();eraseCheckpointed=true;}strokeErased=eraseWholeStrokeAt(stroke.points[0]);if(strokeErased)requestEraseRender();}else if(mode==='eraser-pixel')drawStroke(context,stroke);
       if(mode!=='lasso'){const painted=state.inkSelection.size>0||$('#inkOverlay').dataset.painted==='1';state.inkSelection.clear();if(painted)renderInkSelection();}
       canvas.setPointerCapture(event.pointerId);
     });
     const sample=event=>{
-      if(!state.drawing||event.pointerId!==pointerId||event.timeStamp===lastEventTime)return;if(event.pointerType==='pen')lastPenSeen=performance.now();lastEventTime=event.timeStamp;
-      const events=event.getCoalescedEvents?.()||[event];let added=false;
-      for(const source of events){const next=constrainInkPoint(point(source)),last=stroke.points.at(-1),minimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7;if(Math.hypot(next.x-last.x,next.y-last.y)<minimum)continue;stroke.points.push(next);added=true;if(stroke.mode==='eraser-stroke'){if(eraseWholeStrokeAt(next)){strokeErased=true;renderInk();}}else if(stroke.mode!=='lasso')drawStroke(context,stroke,stroke.points.length-1);}
+      if(!state.drawing||event.pointerId!==pointerId||event.timeStamp===lastEventTime)return;if(event.pointerType==='pen')notePenActivity();lastEventTime=event.timeStamp;
+      const coalesced=event.getCoalescedEvents?.(),events=coalesced?.length?coalesced:[event];let added=false;
+      for(const source of events){const next=constrainInkPoint(point(source)),last=stroke.points.at(-1),baseMinimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7,minimum=String(stroke.mode).startsWith('eraser')?Math.max(baseMinimum,inkEraserRadius(stroke.mode,stroke.size)*.24):baseMinimum;if(Math.hypot(next.x-last.x,next.y-last.y)<minimum)continue;if(source.pointerType==='pen')next.p=last.p*.58+next.p*.42;stroke.points.push(next);added=true;if(stroke.mode==='eraser-stroke'){if(!eraseCheckpointed&&canEraseWholeStrokeAt(next,stroke.size)){checkpoint();eraseCheckpointed=true;}if(eraseWholeStrokeAt(next)){strokeErased=true;requestEraseRender();}}else if(stroke.mode!=='lasso')drawStroke(context,stroke,stroke.points.length-1);}
       if(added&&stroke.mode==='lasso')renderInkSelection(stroke.points);
     };
     canvas.addEventListener('pointermove',sample,{passive:true});
     if('onpointerrawupdate' in window)canvas.addEventListener('pointerrawupdate',sample,{passive:true});
     const finish=event=>{
-      if(!state.drawing||(event&&event.pointerId!==pointerId))return;state.drawing=false;
+      if(!state.drawing||(event&&event.pointerId!==pointerId))return;if(event?.type==='pointerup')sample(event);state.drawing=false;
       const completed=stroke;stroke=null;pointerId=null;state.guideSnap=null;
-      if(event?.type==='pointercancel'){renderInk();return;}
+      if(event?.type==='pointercancel'){if(eraseFrame){cancelAnimationFrame(eraseFrame);eraseFrame=0;}if(strokeErased)markChanged();renderInk();return;}
       if(completed.mode==='lasso'){
         state.inkSelection.clear();if(completed.points.length>2)(activeNote().inkStrokes||[]).forEach(item=>{if(!String(item.mode).startsWith('eraser')&&(item.points||[]).some(p=>pointInPolygon(p,completed.points)))state.inkSelection.add(item.id);});renderInkSelection();return;
       }
-      if(completed.mode==='eraser-stroke'){if(strokeErased)markChanged();return;}
+      if(completed.mode==='eraser-stroke'){if(eraseFrame){cancelAnimationFrame(eraseFrame);eraseFrame=0;renderInk();}if(strokeErased)markChanged();return;}
+      if(completed.mode==='eraser-pixel'){const note=activeNote(),result=eraseInkPath(note.inkStrokes,completed.points,inkEraserRadius(completed.mode,completed.size));if(result.changed||note.ink){checkpoint();note.inkStrokes=result.strokes;if(note.ink){delete completed.temporary;note.inkStrokes.push(completed);}renderInk();markChanged();}else renderInk();return;}
       checkpoint();if(completed.points.length===1)drawStroke(context,completed);delete completed.temporary;activeNote().inkStrokes.push(completed);markChanged();
     };
     canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);canvas.addEventListener('lostpointercapture',finish);
@@ -790,9 +805,9 @@
   function setupCanvasNavigation() {
     const viewport = $('#canvasViewport');
     const touches=new Map();let pinch=null;
-    viewport.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch'||state.tool==='ink')return;touches.set(event.pointerId,{x:event.clientX,y:event.clientY});if(touches.size===2){const [a,b]=[...touches.values()],rect=viewport.getBoundingClientRect(),center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:state.view.zoom,worldX:(center.x-rect.left-state.view.x)/state.view.zoom,worldY:(center.y-rect.top-state.view.y)/state.view.zoom};state.pinchActive=true;}},{capture:true});
-    viewport.addEventListener('pointermove',event=>{if(!touches.has(event.pointerId))return;touches.set(event.pointerId,{x:event.clientX,y:event.clientY});if(pinch&&touches.size===2){event.preventDefault();const [a,b]=[...touches.values()],rect=viewport.getBoundingClientRect(),distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};state.view.zoom=clamp(pinch.zoom*distance/pinch.distance,.3,1.8);state.view.x=center.x-rect.left-pinch.worldX*state.view.zoom;state.view.y=center.y-rect.top-pinch.worldY*state.view.zoom;updateTransform();}},{capture:true});
-    const releaseTouch=event=>{touches.delete(event.pointerId);if(touches.size<2){pinch=null;state.pinchActive=false;}};viewport.addEventListener('pointerup',releaseTouch,{capture:true});viewport.addEventListener('pointercancel',releaseTouch,{capture:true});
+    viewport.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch'||(state.tool==='ink'&&performance.now()<(state.penActiveUntil||0)))return;touches.set(event.pointerId,{x:event.clientX,y:event.clientY});if(touches.size===2){const [a,b]=[...touches.values()],rect=viewport.getBoundingClientRect(),center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};pinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:state.view.zoom,worldX:(center.x-rect.left-state.view.x)/state.view.zoom,worldY:(center.y-rect.top-state.view.y)/state.view.zoom};state.pinchActive=true;if(state.tool==='ink'){state.cancelInkStroke?.();event.preventDefault();event.stopPropagation();}}},{capture:true});
+    viewport.addEventListener('pointermove',event=>{if(!touches.has(event.pointerId))return;touches.set(event.pointerId,{x:event.clientX,y:event.clientY});if(pinch&&touches.size===2){event.preventDefault();if(state.tool==='ink')event.stopPropagation();const [a,b]=[...touches.values()],rect=viewport.getBoundingClientRect(),distance=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),center={x:(a.x+b.x)/2,y:(a.y+b.y)/2};state.view.zoom=clamp(pinch.zoom*distance/pinch.distance,.3,1.8);state.view.x=center.x-rect.left-pinch.worldX*state.view.zoom;state.view.y=center.y-rect.top-pinch.worldY*state.view.zoom;updateTransform();}},{capture:true});
+    const releaseTouch=event=>{touches.delete(event.pointerId);if(touches.size<2){const completedPinch=Boolean(pinch);pinch=null;state.pinchActive=false;if(completedPinch){clearTimeout(state.inkRenderTimer);state.inkRenderTimer=setTimeout(renderInk,90);updateInkCursor();}}};viewport.addEventListener('pointerup',releaseTouch,{capture:true});viewport.addEventListener('pointercancel',releaseTouch,{capture:true});
     viewport.addEventListener('wheel', event => {
       if(!event.ctrlKey){const scroller=event.target.closest('.format-bar,.secondary-format-bar,.secondary-block-list,#documentCard');if(scroller){if(scroller.matches('.format-bar,.secondary-format-bar')&&scroller.scrollWidth>scroller.clientWidth){event.preventDefault();scroller.scrollLeft+=event.deltaX||event.deltaY;return;}if(scroller.scrollHeight>scroller.clientHeight)return;}}
       event.preventDefault();
@@ -818,6 +833,7 @@
   }
 
   function setTool(tool) {
+    if(tool!=='ink'&&state.drawing)state.cancelInkStroke?.();
     const toolbar=$('.canvas-toolbar'),previousScroll=toolbar.scrollLeft;state.tool = tool; $('#canvasViewport').dataset.tool = tool;
     if(tool!=='ink'){state.inkSelection.clear();renderInkSelection();}
     $('.canvas-toolbar').classList.toggle('ink-active',tool==='ink');

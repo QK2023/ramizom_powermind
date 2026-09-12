@@ -48,7 +48,7 @@ async function run() {
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=12"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=13"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
   assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -62,7 +62,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=12"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=13"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -98,7 +98,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=12') && html.includes('style.css?v=12') && html.includes('app.js?v=12'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=13') && html.includes('style.css?v=13') && html.includes('app.js?v=13'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -145,6 +145,7 @@ async function run() {
   context.sanitizeRichHtml=value=>String(value||'').replace(/<img[^>]*>/gi,'').replace(/\s+onclick=(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,'');
   context.t=key=>key;
   context.normalizedId=(value,used)=>{let next=value||context.id();while(used.has(next))next=context.id();used.add(next);return next;};
+  vm.runInContext(section('  function pointInPolygon(', '  function resolveInkColor('), context);
   vm.runInContext(section('  function findEditorPosition(', '  function firstMindMapPosition('), context);
   vm.runInContext(section('  function migrateDatabase(', '  function applyTranslations('), context);
   const normalized=context.migrateDatabase({version:3,workspaces:[{id:'w'}],folders:[{id:'f',workspaceId:'w'}],notes:[{id:'n',workspaceId:'w',folderId:'f',ink:'https://tracker.invalid/pixel.png',blocks:[{id:'b',type:'bad" onclick="alert(1)',color:'red" onmouseover="x',html:'<img src=x onerror=alert(1)><b onclick=alert(2)>safe</b>'},{id:'image',type:'image',src:'https://tracker.invalid/image.png'}],ideas:[{id:'r',root:true},{id:'a',parentId:'c'},{id:'c',parentId:'a'}]}]});
@@ -171,10 +172,20 @@ async function run() {
   const loaded=await context.testStorage.loadDirectory(directory);
   assert.equal(loaded.notes[0].fileName,'Visible file','Folder workspace round-trips the independent note filename');
   assert.equal(loaded.notes[0].title,'Independent editor title','Editor title remains independent from the note filename');
-  vm.runInContext(section('  function pointInPolygon(', '  function resolveInkColor('), context);
   const square=[{x:0,y:0},{x:10,y:0},{x:10,y:10},{x:0,y:10}];
   assert.equal(context.pointInPolygon({x:5,y:5},square),true);
   assert.equal(context.pointInPolygon({x:15,y:5},square),false);
+  const inkLine={id:'line',mode:'pen',size:3,color:'#111111',points:[0,2,4,6,8,10,12,14,16,18,20].map(x=>({x,y:0,p:.5}))};
+  assert.equal(context.strokeNearPoint(inkLine,{x:5,y:1},1),true,'Stroke eraser hits the segment between sampled points');
+  assert.equal(context.strokeNearPoint(inkLine,{x:5,y:3},1),false,'Stroke eraser does not delete a nearby untouched stroke');
+  const erased=context.eraseInkPath([inkLine],[{x:10,y:-2},{x:10,y:2}],1);
+  assert.equal(erased.changed,true,'Point eraser cuts a vector stroke intersecting its visible path');
+  assert.deepEqual(Array.from(erased.strokes,value=>Array.from(value.points,point=>point.x)),[[0,2,4,6],[14,16,18,20]],'Point eraser preserves clean vector fragments outside its visible radius');
+  const untouched=context.eraseInkPath([inkLine],[{x:50,y:-2},{x:50,y:2}],1);
+  assert.equal(untouched.changed,false,'Point eraser leaves nearby but untouched ink intact');
+  assert.equal(untouched.strokes[0],inkLine,'Untouched strokes keep their original object and ordering');
+  const upgraded=context.normalizeLegacyInkErasers([inkLine,{id:'old-mask',mode:'eraser-pixel',size:1,points:[{x:5,y:-2},{x:5,y:2}]}]);
+  assert.equal(upgraded.some(stroke=>String(stroke.mode).startsWith('eraser')),false,'Vector-only notes migrate legacy eraser masks into stable stroke geometry');
   // --- Touch ink cost: Android gets a smaller buffer, Windows keeps the pen contract byte for byte ---
   assert(source.includes("function coarsePointer(){return matchMedia('(pointer:coarse)').matches;}"), 'Touch-only devices are identified through one shared helper');
   assert(source.includes("quality=canvas.id==='inkOverlay'?(touch?.6:1):clamp((window.devicePixelRatio||1)*state.view.zoom,1,touch?1:1.25)"), 'Touch devices cap the ink buffer at 1:1 while pen devices keep the sharper 1.25 cap');
@@ -188,7 +199,15 @@ async function run() {
   assert(/strokeTouch=coarse;[^;]*guideSnap=null;inkCanvasRect=canvas\.getBoundingClientRect\(\);/.test(source), 'Each stroke resets guide snapping and refreshes the cached ink bounds');
   assert(source.includes('inkCanvasRect = null;'), 'Pan, zoom and fit invalidate the cached ink bounds');
   assert(source.includes('palmLimit=coarse?140:24'), 'Finger contacts draw on touch-only devices while pen-first devices keep the original 24px palm rule');
-  assert(source.includes("minimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7"), 'The pen keeps its dense .22 sampling while touch strokes filter wider');
+  assert(source.includes("baseMinimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7"), 'The pen keeps its dense .22 sampling while touch strokes filter wider');
+  assert(source.includes("startsWith('eraser')?Math.max(baseMinimum,inkEraserRadius"), 'Wide erasers discard redundant sub-pixel samples without leaving gaps');
+  assert(source.includes("if(source.pointerType==='pen')next.p=last.p*.58+next.p*.42"), 'Pen pressure is smoothed without delaying pointer coordinates');
+  assert(source.includes("completed.mode==='eraser-pixel'"), 'Point erasing commits vector geometry instead of leaving a permanent raster mask');
+  assert(source.includes('indexEraserPath(path,radius)'), 'Point eraser uses a spatial path index instead of scanning every eraser sample for every ink point');
+  assert(source.includes("==='eraser'?'eraser-stroke':'lasso'"), 'The Windows pen side-button erase setting maps to the supported stroke eraser');
+  assert(source.includes('requestEraseRender=()=>{if(eraseFrame)return;eraseFrame=requestAnimationFrame'), 'Whole-stroke erasing coalesces expensive canvas redraws to one per frame');
+  assert(source.includes("state.tool==='ink'&&performance.now()<(state.penActiveUntil||0)"), 'Pen activity suppresses palm touches without disabling intentional two-finger navigation');
+  assert(source.includes('state.cancelInkStroke?.();event.preventDefault();event.stopPropagation()'), 'Starting a two-finger ink gesture safely cancels the provisional finger stroke');
   assert(source.includes("if(event.pointerType==='mouse')updateInkCursor(event)"), 'Ink cursor styling is only touched by a mouse');
   assert(source.includes('coordinateFrame=requestAnimationFrame('), 'The canvas coordinate read-out is coalesced into one frame');
   // --- Mind map: selectable and draggable as a whole ---
