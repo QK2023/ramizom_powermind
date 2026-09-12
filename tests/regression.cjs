@@ -27,13 +27,14 @@ async function run() {
   assert(source.includes("document.execCommand('styleWithCSS',false,false)"), 'Inline formatting commands prefer stable semantic tags');
   assert(source.includes("state.guideSnap={type:'ruler',edge:index}"), 'Ruler ink locks to a visible edge instead of its centre line');
   assert(source.includes("state.guideSnap={type:'triangle',edge:edgeIndex}"), 'Triangle ink stays on one edge for the duration of a stroke');
-  assert(source.includes(".text-color-button,[data-editor-color]"), 'Opening a document color palette is not mistaken for an outside click');
+  assert(!source.includes('openTextColorPalette')&&!source.includes('data-editor-color'), 'The retired document text-color setting has no editor code path');
+  assert(!html.includes('textColorPalette')&&!css.includes('.color-palette'), 'The retired text-color palette has no UI surface');
   assert(!source.includes('id="addBlockRow"'), 'The obsolete Add block row is removed');
   assert(source.includes("editor.addEventListener('beforeinput'"), 'Typing history snapshots are captured before text mutates');
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=8"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=9"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
   assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -47,7 +48,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=8"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=9"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -83,7 +84,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=8') && html.includes('style.css?v=8') && html.includes('app.js?v=8'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=9') && html.includes('style.css?v=9') && html.includes('app.js?v=9'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
