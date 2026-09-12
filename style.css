@@ -555,6 +555,8 @@ html:lang(ja) .accent-button,html:lang(ja) .workspace-picker,html:lang(ja) .nav-
 /* Portrait is a three-page flow: workspace home, note list, then editor. */
 @media (max-width:1100px) and (orientation:portrait) {
   .app-shell { display:block; }
+  /* Desktop collapse preferences must never hide a full-screen mobile stage. */
+  .app-shell.nav-collapsed .nav-pane,.app-shell.notes-collapsed .notes-pane,.app-shell.focus-mode .nav-pane,.app-shell.focus-mode .notes-pane { visibility:visible;opacity:1;pointer-events:auto; }
   .nav-pane,.notes-pane { position:fixed;inset:0;width:100dvw;height:100dvh;box-sizing:border-box;border-right:0; }
   .nav-pane { z-index:120;transform:translateX(-105%);padding:16px 12px calc(10px + env(safe-area-inset-bottom));transition:transform .28s var(--ease); }
   .notes-pane { z-index:110;transform:translateX(105%);background:var(--fill-pane);padding-bottom:env(safe-area-inset-bottom);transition:transform .28s var(--ease); }
