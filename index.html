@@ -13,10 +13,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Ramizom PowerMind">
   <title>Ramizom PowerMind</title>
-  <link rel="icon" href="icon.svg?v=7" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=7">
-  <link rel="manifest" href="manifest.webmanifest?v=7">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="icon" href="icon.svg?v=8" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=8">
+  <link rel="manifest" href="manifest.webmanifest?v=8">
+  <link rel="stylesheet" href="style.css?v=8">
   <script>
   window.PM_SPLASH_STARTED=performance.now();
   // The app itself boots asynchronously, so the saved theme is resolved here, while the head
@@ -92,22 +92,26 @@
     <symbol id="i-ruler" viewBox="0 0 24 24"><path d="m3.5 15.5 12-12 5 5-12 12zM12 7l2 2m1-5 2 2M9 10l2 2m-5 1 2 2"/></symbol>
     <symbol id="i-triangle" viewBox="0 0 24 24"><path d="M3 20 20 4v16zM9 16h6v-6z"/></symbol>
     <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="m11 7-5 13m7-13 5 13M8 15h8M9 3h6"/></symbol>
+    <symbol id="i-app-logo" viewBox="0 0 128 128">
+      <defs><filter id="app-logo-blur"><feGaussianBlur stdDeviation="16"/></filter><linearGradient id="app-logo-base" x1="8" y1="8" x2="120" y2="120" gradientUnits="userSpaceOnUse"><stop stop-color="#d52f27"/><stop offset=".48" stop-color="#d79418"/><stop offset="1" stop-color="#16853d"/></linearGradient><clipPath id="app-logo-clip"><rect x="8" y="8" width="112" height="112" rx="28"/></clipPath></defs>
+      <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#app-logo-base)"/><g clip-path="url(#app-logo-clip)" filter="url(#app-logo-blur)" opacity=".82"><circle cx="31" cy="32" r="38" fill="#ff4035"/><circle cx="91" cy="35" r="35" fill="#ffd33f"/><circle cx="77" cy="101" r="43" fill="#20b957"/></g><rect x="9" y="9" width="110" height="110" rx="27" fill="none" stroke="#fff" stroke-opacity=".48" stroke-width="2"/><g fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><circle cx="35" cy="42" r="9"/><circle cx="93" cy="34" r="9"/><circle cx="93" cy="94" r="9"/><path d="M44 42h23m12-2v41M43 48l42 38"/></g>
+    </symbol>
   </defs></svg>
 
   <div class="startup-splash" id="startupSplash" role="status" aria-label="Ramizom PowerMind">
     <div class="splash-brand">
-      <div class="splash-mark"><svg><use href="#i-map"/></svg></div>
+      <div class="splash-mark"><svg viewBox="0 0 128 128"><use href="#i-app-logo"/></svg></div>
       <strong>Ramizom PowerMind</strong>
     </div>
   </div>
 
   <section class="folder-gate" id="folderGate" hidden>
-    <div class="folder-gate-card"><div class="splash-mark"><svg><use href="#i-map"/></svg></div><div><h1>Ramizom PowerMind</h1><p data-i18n="folderGateBody">Choose a system folder before you begin. Your notes stay visible in File Explorer, and the folder can be reopened or moved like ordinary files.</p></div><button type="button" class="accent-button" id="chooseFolderGate"><svg><use href="#i-folder"/></svg><span data-i18n="chooseFolder">Choose folder</span></button></div>
+    <div class="folder-gate-card"><div class="splash-mark"><svg viewBox="0 0 128 128"><use href="#i-app-logo"/></svg></div><div><h1>Ramizom PowerMind</h1><p data-i18n="folderGateBody">Choose a system folder before you begin. Your notes stay visible in File Explorer, and the folder can be reopened or moved like ordinary files.</p></div><button type="button" class="accent-button" id="chooseFolderGate"><svg><use href="#i-folder"/></svg><span data-i18n="chooseFolder">Choose folder</span></button></div>
   </section>
 
   <section class="folder-gate" id="unsupportedGate" hidden>
     <div class="folder-gate-card platform-gate-card">
-      <div class="splash-mark"><svg><use href="#i-map"/></svg></div>
+      <div class="splash-mark"><svg viewBox="0 0 128 128"><use href="#i-app-logo"/></svg></div>
       <div><h1 data-i18n="unsupportedTitle">This browser can’t save notes yet</h1><p id="unsupportedReason" data-i18n="unsupportedBody">Ramizom PowerMind keeps every note as an ordinary file inside a folder you choose, which needs the File System Access API.</p></div>
       <div class="platform-support">
         <strong data-i18n="unsupportedSupportedLabel">Use one of these</strong>
@@ -271,7 +275,7 @@
   <section id="printSheet" aria-hidden="true"></section>
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="i18n.js?v=7"></script>
-  <script src="app.js?v=7"></script>
+  <script src="i18n.js?v=8"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
