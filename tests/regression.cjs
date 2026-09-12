@@ -48,7 +48,7 @@ async function run() {
   assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=15"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=16"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind');
   assert.equal(manifest.short_name, 'PowerMind');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -62,7 +62,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=15"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=16"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -99,7 +99,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=15') && html.includes('style.css?v=15') && html.includes('app.js?v=15'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=16') && html.includes('style.css?v=16') && html.includes('app.js?v=16'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -209,6 +209,9 @@ async function run() {
   assert(source.includes('transformFrame=requestAnimationFrame(apply)') && source.includes('translate3d('), 'Canvas transforms are coalesced to compositor animation frames');
   assert(source.includes('beginCanvasMotion()') && source.includes('endCanvasMotion(140)'), 'Pan, pinch and wheel interactions enter a temporary lightweight rendering state');
   assert(css.includes('.canvas-viewport.navigating .document-card') && css.includes('backdrop-filter:none!important'), 'Expensive Fluent effects pause only while the canvas is moving');
+  assert(source.includes('const insertAtCaret=type=>') && source.includes('prefixProbe.cloneContents()') && source.includes('tailProbe.cloneContents()'), 'Ribbon elements split and insert at the live caret instead of appending to the document');
+  assert(source.includes("button.onpointerdown=event=>{event.preventDefault();insertAtCaret(button.dataset.editorAdd);}"), 'Ribbon insertion preserves the editor selection before focus can leave the document');
+  assert(source.includes("const editorScroll=new Map(") && source.includes("focus({preventScroll:true})"), 'Editor rerenders preserve internal scroll position and avoid jumping the document to its start');
   assert(source.includes('palmLimit=coarse?140:24'), 'Finger contacts draw on touch-only devices while pen-first devices keep the original 24px palm rule');
   assert(source.includes("baseMinimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7"), 'The pen keeps its dense .22 sampling while touch strokes filter wider');
   assert(source.includes("startsWith('eraser')?Math.max(baseMinimum,inkEraserRadius"), 'Wide erasers discard redundant sub-pixel samples without leaving gaps');
