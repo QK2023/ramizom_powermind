@@ -37,9 +37,9 @@ Then open the printed local URL in a current Chrome, Edge, Firefox, or Safari re
 
 Any static HTTPS host can serve the project in production. Configure restrictive security headers at the hosting layer; recommended policy examples are documented in [SECURITY.md](SECURITY.md).
 
-### Cloudflare Pages
+### Cloudflare deployment
 
-Use the following Pages build settings:
+For Cloudflare Pages, use these build settings:
 
 | Setting | Value |
 | --- | --- |
@@ -49,6 +49,16 @@ Use the following Pages build settings:
 | Root directory | Leave blank |
 
 The build is dependency-free and copies only the public application assets into `dist/`. The included `_headers` file is applied by Cloudflare Pages from that output directory.
+
+For Cloudflare Workers Builds, the build and deploy commands are separate. Use:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` |
+| Deploy command | `npm run deploy:cloudflare` |
+| Root directory | Leave blank |
+
+The deploy command explicitly publishes `dist/`. Do not use the repository root (`.`) as the Workers asset directory: doing so includes development files such as `node_modules/workerd`, which exceeds Cloudflare's 25 MiB per-asset limit.
 
 ## Quality checks
 

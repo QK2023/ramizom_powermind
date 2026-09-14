@@ -41,7 +41,9 @@ async function run() {
   assert(fs.readFileSync(path.join(projectRoot,'README.md'),'utf8').includes('AI development disclosure'), 'The README discloses substantial AI assistance');
   const packageMetadata=JSON.parse(fs.readFileSync(path.join(projectRoot,'package.json'),'utf8'));
   assert.equal(packageMetadata.scripts.build,'node tools/build.cjs','Static hosts have a deterministic production build command');
+  assert.equal(packageMetadata.scripts['deploy:cloudflare'],'npx wrangler deploy --assets ./dist','Workers deploy only the allowlisted production output');
   assert(fs.readFileSync(path.join(projectRoot,'tools','build.cjs'),'utf8').includes("'index.html'"),'The production build explicitly includes the application entry point');
+  assert(fs.readFileSync(path.join(projectRoot,'tools','build.cjs'),'utf8').includes('cloudflareAssetLimit'),'The production build rejects assets above Cloudflare\'s per-file limit');
   assert(fs.readFileSync(path.join(projectRoot,'_headers'),'utf8').includes('Content-Security-Policy:'),'Cloudflare Pages receives baseline security headers');
   assert(source.includes('function renderUnifiedEditors('), 'Editors share one renderer');
   assert(source.includes('function bindUnifiedEditor('), 'Editors share one event binder');

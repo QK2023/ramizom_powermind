@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const projectRoot = path.resolve(__dirname, '..');
 const outputDirectory = path.join(projectRoot, 'dist');
+const cloudflareAssetLimit = 25 * 1024 * 1024;
 const publicFiles = [
   'index.html',
   'app.js',
@@ -31,7 +32,12 @@ fs.rmSync(outputDirectory, { recursive: true, force: true });
 fs.mkdirSync(outputDirectory, { recursive: true });
 
 for (const file of publicFiles) {
-  fs.copyFileSync(path.join(projectRoot, file), path.join(outputDirectory, file));
+  const source = path.join(projectRoot, file);
+  const size = fs.statSync(source).size;
+  if (size > cloudflareAssetLimit) {
+    throw new Error(`Cloudflare asset exceeds 25 MiB: ${file}`);
+  }
+  fs.copyFileSync(source, path.join(outputDirectory, file));
 }
 
 if (!fs.existsSync(path.join(outputDirectory, 'index.html'))) {
