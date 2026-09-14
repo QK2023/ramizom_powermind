@@ -13,10 +13,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Ramizom PowerMind Preview">
   <title>Ramizom PowerMind Preview</title>
-  <link rel="icon" href="icon.svg?v=19" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=19">
-  <link rel="manifest" href="manifest.webmanifest?v=19">
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="icon" href="icon.svg?v=25" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=25">
+  <link rel="manifest" href="manifest.webmanifest?v=25">
+  <link rel="stylesheet" href="style.css?v=25">
   <script>
   window.PM_SPLASH_STARTED=performance.now();
   // The app itself boots asynchronously, so the saved theme is resolved here, while the head
@@ -130,20 +130,20 @@
       <div class="brand-row">
         <div class="app-mark"><svg><use href="#i-map"/></svg></div>
         <div class="brand-copy"><strong>Ramizom</strong><span>PowerMind Preview</span></div>
-        <span id="navMenuSlot"><button class="icon-button desktop-pane-toggle" id="collapseNav" title="Toggle navigation" aria-label="Toggle navigation"><svg><use href="#i-menu"/></svg></button></span>
+        <span id="navMenuSlot"><button class="icon-button desktop-pane-toggle" id="collapseNav" data-i18n-aria="toggleNavigation" title="Toggle navigation" aria-label="Toggle navigation"><svg><use href="#i-menu"/></svg></button></span>
       </div>
 
       <button class="accent-button" id="newNote"><svg><use href="#i-add"/></svg><span data-i18n="newNote">New note</span></button>
       <label class="search-box"><svg><use href="#i-search"/></svg><input id="searchInput" data-i18n-placeholder="search" placeholder="Search notes"></label>
 
-      <nav class="nav-list" aria-label="Note filters">
+      <nav class="nav-list" data-i18n-aria="noteFilters" aria-label="Note filters">
         <button class="nav-item selected" data-filter="all"><svg><use href="#i-home"/></svg><span data-i18n="allNotes">All notes</span><em id="allCount">0</em></button>
         <button class="nav-item" data-filter="favorites"><svg><use href="#i-star"/></svg><span data-i18n="favorites">Favorites</span><em id="favoriteCount">0</em></button>
         <button class="nav-item" data-filter="trash"><svg><use href="#i-trash"/></svg><span data-i18n="trash">Trash</span><em id="trashCount">0</em></button>
       </nav>
 
       <div class="section-label"><span data-i18n="workspace">WORKSPACE</span><button class="icon-button small" id="addWorkspace" data-i18n-aria="addWorkspace"><svg><use href="#i-add"/></svg></button></div>
-      <div class="workspace-picker-row"><button class="workspace-picker" id="workspacePicker"><i id="workspaceColor"></i><span id="workspaceName">PowerMind</span><svg class="chevron"><use href="#i-chevron-down"/></svg></button><button class="workspace-more overflow-button" id="workspaceMore" aria-label="More"><svg><use href="#i-more"/></svg></button></div>
+      <div class="workspace-picker-row"><button class="workspace-picker" id="workspacePicker"><i id="workspaceColor"></i><span id="workspaceName">PowerMind</span><svg class="chevron"><use href="#i-chevron-down"/></svg></button><button class="workspace-more overflow-button" id="workspaceMore" data-i18n-aria="more" aria-label="More"><svg><use href="#i-more"/></svg></button></div>
       <div class="section-label folders-label"><span data-i18n="folders">FOLDERS</span><button class="icon-button small" id="addFolder" data-i18n-aria="addFolder"><svg><use href="#i-add"/></svg></button></div>
       <nav class="folder-list" id="folderList"></nav>
 
@@ -151,7 +151,7 @@
         <button class="nav-item" id="settingsButton"><svg><use href="#i-settings"/></svg><span data-i18n="settings">Settings</span></button>
       </div>
     </aside>
-    <button class="nav-scrim" id="navScrim" aria-label="Close navigation" tabindex="-1"></button>
+    <button class="nav-scrim" id="navScrim" data-i18n-aria="closeNavigation" aria-label="Close navigation" tabindex="-1"></button>
 
     <section class="notes-pane">
       <header class="pane-header">
@@ -171,12 +171,12 @@
         <div class="breadcrumb" id="breadcrumb"></div>
         <div class="save-state" id="saveState"><i></i><span data-i18n="saved">Saved</span></div>
         <button class="icon-button" id="readingModeButton" data-i18n-aria="readingMode"><svg><use href="#i-eye"/></svg></button>
-        <button class="icon-button" id="undoButton" title="Undo"><svg><use href="#i-undo"/></svg></button>
-        <button class="icon-button" id="redoButton" title="Redo"><svg><use href="#i-redo"/></svg></button>
-        <button class="more-button command-more overflow-button" id="noteMenuButton" aria-label="More"><svg><use href="#i-more"/></svg></button>
+        <button class="icon-button" id="undoButton" data-i18n-aria="undo" title="Undo"><svg><use href="#i-undo"/></svg></button>
+        <button class="icon-button" id="redoButton" data-i18n-aria="redo" title="Redo"><svg><use href="#i-redo"/></svg></button>
+        <button class="more-button command-more overflow-button" id="noteMenuButton" data-i18n-aria="more" aria-label="More"><svg><use href="#i-more"/></svg></button>
       </header>
 
-      <div class="canvas-toolbar" role="toolbar" aria-label="Editor ribbon">
+      <div class="canvas-toolbar" role="toolbar" data-i18n-aria="editorRibbon" aria-label="Editor ribbon">
         <div class="ribbon-group ribbon-mode-group"><div class="segmented" id="toolSelector">
           <button class="tool-button active" data-tool="select" data-i18n-aria="select"><svg><use href="#i-pointer"/></svg><span data-i18n="select">Select</span></button>
           <button class="tool-button" data-tool="pan" data-i18n-aria="pan"><svg><use href="#i-hand"/></svg><span data-i18n="pan">Pan</span></button>
@@ -184,7 +184,7 @@
         </div><span class="ribbon-group-label" data-i18n="ribbonMode">Mode</span></div>
         <div class="ribbon-group ribbon-insert-group">
         <button class="command-button" id="addEditor" data-i18n-aria="addEditor" title="Add block editor"><svg><use href="#i-note"/></svg><span data-i18n="addEditor">Block editor</span></button>
-        <button class="command-button" id="addCard" title="Create a new mind map"><svg><use href="#i-mindmap-new"/></svg><span data-i18n="newMindMap">New map</span></button>
+        <button class="command-button" id="addCard" data-i18n-aria="createMindMap" title="Create a new mind map"><svg><use href="#i-mindmap-new"/></svg><span data-i18n="newMindMap">New map</span></button>
         <button class="command-button" id="layoutMindMap" data-i18n-aria="autoLayout" title="Arrange connected topics"><svg><use href="#i-layout"/></svg><span data-i18n="autoLayout">Auto layout</span></button>
         <button class="command-button formula-command" id="formulaButton" data-i18n-aria="formula"><strong>ƒx</strong><span data-i18n="formula">Formula</span></button>
           <span class="ribbon-group-label" data-i18n="ribbonInsert">Insert</span>
@@ -204,8 +204,8 @@
           <button class="color-chip" data-color="#7a3db8" style="--chip:#7a3db8"></button>
           <button class="color-chip" data-color="#18864b" style="--chip:#18864b"></button>
           <button class="color-chip" data-color="#e68a17" style="--chip:#e68a17"></button>
-          <label class="custom-color" title="Custom color"><input id="inkColorInput" type="color" value="#1267c4"><span></span></label>
-          <input id="penSize" type="range" min="1" max="12" value="3" aria-label="Pen size">
+          <label class="custom-color" data-i18n-aria="customColor" title="Custom color"><input id="inkColorInput" type="color" value="#1267c4"><span></span></label>
+          <input id="penSize" type="range" min="1" max="12" value="3" data-i18n-aria="penSize" aria-label="Pen size">
           <span class="ink-guide-picker"><button class="ink-guide-button" data-ink-guide="ruler"><svg><use href="#i-ruler"/></svg><span data-i18n="ruler">Ruler</span></button><button class="ink-guide-button" data-ink-guide="triangle"><svg><use href="#i-triangle"/></svg><span data-i18n="triangle">Triangle</span></button><button class="ink-guide-button" data-ink-guide="compass"><svg><use href="#i-compass"/></svg><span data-i18n="compass">Compass</span></button></span>
           <button class="subtle-button" id="clearInk" data-i18n="clearInk">Clear ink</button>
           <span class="ribbon-group-label" data-i18n="ribbonDraw">Draw</span>
@@ -254,7 +254,7 @@
       <div class="dialog-head"><h2 data-i18n="settings">Settings</h2><button class="icon-button" value="cancel"><svg><use href="#i-close"/></svg></button></div>
       <div class="setting-row"><span data-i18n="language">Language</span><div class="fluent-picker" data-picker="language">
         <button class="fluent-select" id="languageSelect" type="button" aria-haspopup="listbox" aria-expanded="false"><span id="languageSelectLabel">English</span><svg class="select-chevron"><use href="#i-chevron-down"/></svg></button>
-        <div class="fluent-options" id="languageMenu" role="listbox"><button type="button" data-picker-value="en"><span>English</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="zh"><span>中文</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="es"><span>Español</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="fr"><span>Français</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="de"><span>Deutsch</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="pt"><span>Português</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="ko"><span>한국어</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="ja"><span>日本語</span><svg><use href="#i-check"/></svg></button></div>
+        <div class="fluent-options" id="languageMenu" role="listbox"><button type="button" data-picker-value="en"><span data-language-name="en">English</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="zh"><span data-language-name="zh">Chinese</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="es"><span data-language-name="es">Spanish</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="fr"><span data-language-name="fr">French</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="de"><span data-language-name="de">German</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="pt"><span data-language-name="pt">Portuguese</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="ko"><span data-language-name="ko">Korean</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="ja"><span data-language-name="ja">Japanese</span><svg><use href="#i-check"/></svg></button></div>
       </div></div>
       <div class="setting-row"><span data-i18n="theme">Theme</span><div class="fluent-picker" data-picker="theme">
         <button class="fluent-select" id="themeSelect" type="button" aria-haspopup="listbox" aria-expanded="false"><span id="themeSelectLabel" data-i18n="system">System</span><svg class="select-chevron"><use href="#i-chevron-down"/></svg></button>
@@ -266,15 +266,15 @@
       </div></div>
       <div class="setting-row font-size-row"><span data-i18n="bodyFontSize">Body text size</span><div class="slider-control"><input id="bodyFontSize" type="range" min="14" max="22" step="1" value="16"><output id="bodyFontSizeValue">16 px</output></div></div>
       <div class="setting-row"><span data-i18n="penButton">Pen side button</span><div class="fluent-picker" data-picker="penButton"><button class="fluent-select" id="penButtonSelect" type="button" aria-haspopup="listbox" aria-expanded="false"><span id="penButtonSelectLabel" data-i18n="sideButtonLasso">Lasso select</span><svg class="select-chevron"><use href="#i-chevron-down"/></svg></button><div class="fluent-options" id="penButtonMenu" role="listbox"><button type="button" data-picker-value="lasso"><span data-i18n="sideButtonLasso">Lasso select</span><svg><use href="#i-check"/></svg></button><button type="button" data-picker-value="eraser"><span data-i18n="sideButtonEraser">Erase</span><svg><use href="#i-check"/></svg></button></div></div></div>
-      <section class="folder-setting-card"><div class="folder-setting-icon"><svg><use href="#i-folder"/></svg></div><div class="folder-storage-copy"><strong data-i18n="systemFolder">System folder</strong><small id="folderStorageStatus" data-i18n="folderRequired">Choose a folder for your notes</small></div><div class="folder-setting-actions"><button type="button" class="secondary-action" id="openDataFolder" data-i18n="chooseFolder">Choose folder</button><button type="button" class="subtle-button danger-action" id="closeDataFolder" data-i18n="closeFolder" hidden>Close folder</button></div></section>
+      <section class="folder-setting-card"><div class="folder-setting-icon"><svg><use href="#i-folder"/></svg></div><div class="folder-storage-copy"><strong id="storageSettingTitle" data-i18n="systemFolder">System folder</strong><small id="folderStorageStatus" data-i18n="folderRequired">Choose a folder for your notes</small></div><div class="folder-setting-actions"><button type="button" class="secondary-action" id="openDataFolder" data-i18n="chooseFolder">Choose folder</button><button type="button" class="subtle-button danger-action" id="closeDataFolder" data-i18n="closeFolder" hidden>Close folder</button><button type="button" class="secondary-action" id="exportAllData" data-i18n="exportBackup">Export backup</button><button type="button" class="secondary-action" id="importAllData" data-i18n="importBackup">Import backup</button><input id="browserImportInput" type="file" accept="application/json,.json" hidden></div></section>
     </form>
   </dialog>
   <dialog class="app-dialog formula-dialog" id="formulaDialog"><div class="dialog-head"><div><h2 data-i18n="formula">Formula</h2><p data-i18n="formulaHint">Build a formula with the keyboard or type LaTeX.</p></div></div><div class="formula-target"><button class="selected" data-target="document" data-i18n="documentTarget">Document</button><button data-target="mindmap" data-i18n="mindmapTarget">Mind map</button></div><input id="formulaInput" autocomplete="off" spellcheck="false" placeholder="e.g. \frac{a+b}{c}"><div class="formula-preview" id="formulaPreview"></div><div class="formula-keyboard" id="formulaKeyboard"></div><div class="dialog-actions"><button class="secondary-action" id="cancelFormula" data-i18n="cancel">Cancel</button><button class="primary-action" id="insertFormula" data-i18n="insert">Insert</button></div></dialog>
-  <dialog class="image-viewer" id="imageViewer"><div class="image-viewer-bar"><span id="imageViewerTitle"></span><div><button class="icon-button" id="imageZoomOut" aria-label="Zoom out">−</button><button class="icon-button" id="imageZoomReset" aria-label="Reset zoom">100%</button><button class="icon-button" id="imageZoomIn" aria-label="Zoom in">+</button><button class="icon-button" id="closeImageViewer" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div><div class="image-viewer-stage" id="imageViewerStage"><img id="imageViewerImage" alt=""></div></dialog>
+  <dialog class="image-viewer" id="imageViewer"><div class="image-viewer-bar"><span id="imageViewerTitle"></span><div><button class="icon-button" id="imageZoomOut" data-i18n-aria="zoomOut" aria-label="Zoom out">−</button><button class="icon-button" id="imageZoomReset" data-i18n-aria="resetZoom" aria-label="Reset zoom">100%</button><button class="icon-button" id="imageZoomIn" data-i18n-aria="zoomIn" aria-label="Zoom in">+</button><button class="icon-button" id="closeImageViewer" data-i18n-aria="close" aria-label="Close"><svg><use href="#i-close"/></svg></button></div></div><div class="image-viewer-stage" id="imageViewerStage"><img id="imageViewerImage" alt=""></div></dialog>
   <section id="printSheet" aria-hidden="true"></section>
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="i18n.js?v=19"></script>
-  <script src="app.js?v=19"></script>
+  <script src="i18n.js?v=25"></script>
+  <script src="app.js?v=25"></script>
 </body>
 </html>

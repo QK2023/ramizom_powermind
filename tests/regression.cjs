@@ -10,6 +10,20 @@ const i18n = fs.readFileSync(path.join(projectRoot, 'i18n.js'), 'utf8');
 const css = fs.readFileSync(path.join(projectRoot, 'style.css'), 'utf8');
 const html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
 const manifest = JSON.parse(fs.readFileSync(path.join(projectRoot, 'manifest.webmanifest'), 'utf8'));
+const i18nContext={window:{}};
+vm.createContext(i18nContext);
+vm.runInContext(i18n,i18nContext);
+const repositoryTextExtensions = new Set(['.js','.cjs','.html','.css','.md','.json','.webmanifest','.yml','.yaml']);
+function repositoryTextFiles(directory=projectRoot) {
+  const files=[];
+  for(const entry of fs.readdirSync(directory,{withFileTypes:true})){
+    if(entry.isDirectory()&&['.git','.tmp','.cache','.temp','.history','.playwright','.agents','.codex','.claude','node_modules','notes','dist','out','coverage','playwright-report','test-results','screenshots'].includes(entry.name))continue;
+    const absolute=path.join(directory,entry.name);
+    if(entry.isDirectory())files.push(...repositoryTextFiles(absolute));
+    else if(repositoryTextExtensions.has(path.extname(entry.name))||['LICENSE','.gitignore'].includes(entry.name))files.push(absolute);
+  }
+  return files;
+}
 new vm.Script(source);
 function section(start, end) {
   const from = source.indexOf(start), to = source.indexOf(end, from + start.length);
@@ -17,6 +31,14 @@ function section(start, end) {
   return source.slice(from, to);
 }
 async function run() {
+  const hanScript=/[\u3400-\u9fff]/u;
+  repositoryTextFiles().filter(file=>path.basename(file)!=='i18n.js').forEach(file=>assert(!hanScript.test(fs.readFileSync(file,'utf8')),`Non-localization source remains English: ${path.relative(projectRoot,file)}`));
+  assert.equal((i18n.match(/defaultInbox:/g)||[]).length,8,'Localized starter content covers all supported languages');
+  assert(i18n.includes('window.PM_LANGUAGE_NAMES'), 'Native language names live in the localization module');
+  const localeTables=i18nContext.window.PM_I18N,englishKeys=Object.keys(localeTables.en);
+  Object.entries(localeTables).forEach(([locale,table])=>assert.deepEqual(englishKeys.filter(key=>!(key in table)),[],`Locale covers every English key: ${locale}`));
+  assert(fs.readFileSync(path.join(projectRoot,'LICENSE'),'utf8').startsWith('MIT License'), 'The repository includes an MIT license');
+  assert(fs.readFileSync(path.join(projectRoot,'README.md'),'utf8').includes('AI development disclosure'), 'The README discloses substantial AI assistance');
   assert(source.includes('function renderUnifiedEditors('), 'Editors share one renderer');
   assert(source.includes('function bindUnifiedEditor('), 'Editors share one event binder');
   assert.equal((source.match(/function unifiedEditorToolbar\(/g) || []).length, 1, 'Only one editor toolbar implementation exists');
@@ -28,6 +50,9 @@ async function run() {
   assert(source.includes("'A','FONT','BR','CODE','SPAN'"), 'Links and code markup remain supported by the compatibility sanitizer');
   assert(source.includes("[data-editor-link]") && source.includes("document.execCommand('createLink'"), 'The link command uses the continuous editor selection');
   assert(source.includes("prepareNoteImage(image,properties=>add('image'"), 'Image paste is inserted through the note model instead of raw editable HTML');
+  assert(source.includes("if(type==='image'){const following=record.blocks[insertIndex+1]"), 'Every image insertion resolves an editable destination after the image');
+  assert(source.includes("focusBlock=createEditorBlock('text')"), 'An image inserted at the document end creates a trailing paragraph');
+  assert(source.includes("blocks[index].type==='image'&&(!blocks[index+1]"), 'Existing notes migrate end-position images to an editable trailing paragraph');
   assert(!source.includes('data-editor-add="code"'), 'Code insertion is removed from the editor toolbar');
   assert(!source.includes("'quote','code','formula'"), 'Code insertion is removed from the slash menu');
   assert(!source.includes("'```'"), 'Code fence auto-conversion is removed from editor typing');
@@ -40,15 +65,15 @@ async function run() {
   assert(source.includes('contenteditable="false"'), 'Image, formula, and divider blocks are atomic inside the continuous editor');
   assert(source.includes('const removeAtomic='), 'Backspace and Delete remove atomic editor elements through the note model');
   assert(source.includes('record.blocks.forEach(block=>{const blockElement='), 'Typing alongside media preserves non-text blocks during document synchronization');
-  assert(source.includes("list.addEventListener('paste',event=>{event.stopImmediatePropagation()") && source.includes("list.addEventListener('keydown',event=>{event.stopImmediatePropagation()"), 'Continuous editor intercepts paste and keyboard edits once before legacy nested listeners');
+  assert(source.includes("list.addEventListener('paste',event=>{event.stopImmediatePropagation()") && source.includes("list.addEventListener('keydown',event=>{event.stopImmediatePropagation()"), 'Continuous editor owns paste and keyboard edits at one stable event boundary');
   assert(source.includes("list.addEventListener('input',event=>{event.stopImmediatePropagation()"), 'Continuous editor synchronizes each text edit exactly once');
   assert(source.includes('if(!list.isConnected||!root.isConnected||state.readingMode)return'), 'Queued input from a replaced editor cannot resurrect stale text after Enter or Backspace');
   assert(source.includes('if(!editor.isConnected||state.readingMode'), 'Detached editor history listeners ignore post-render browser events');
   assert(source.includes("editor.addEventListener('beforeinput'"), 'Typing history snapshots are captured before text mutates');
-  assert(source.includes("if((!editing||noteEditing)&&event.ctrlKey&&event.key.toLowerCase()==='z')"), 'Ctrl+Z is handled consistently inside and outside the document editor');
+  assert(source.includes('const commandKey=event.ctrlKey||event.metaKey') && source.includes("commandKey&&event.key.toLowerCase()==='z'"), 'Ctrl/Cmd+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=19"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=25"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind Preview');
   assert.equal(manifest.short_name, 'PowerMind Preview');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -62,7 +87,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=19"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=25"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -99,7 +124,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=19') && html.includes('style.css?v=19') && html.includes('app.js?v=19'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=25') && html.includes('style.css?v=25') && html.includes('app.js?v=25'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -135,7 +160,7 @@ async function run() {
     navigator: { storage: { getDirectory: async () => { throw new Error('Unavailable'); } } }
   });
   vm.runInContext(section('  function copyImportedNote(', '  async function importBackup('), context);
-  const original = { id:'n', blocks:[{id:'b', text:'正文'}], ideas:[{id:'root',root:true},{id:'child',parentId:'root'}], editors:[{id:'e',blocks:[{id:'eb',text:'second editor'}]}], inkStrokes:[{id:'ink',points:[]}] };
+  const original = { id:'n', blocks:[{id:'b', text:'Body copy'}], ideas:[{id:'root',root:true},{id:'child',parentId:'root'}], editors:[{id:'e',blocks:[{id:'eb',text:'second editor'}]}], inkStrokes:[{id:'ink',points:[]}] };
   const imported = context.copyImportedNote(original, 'workspace', 'folder');
   assert.equal(imported.ideas[1].parentId, imported.ideas[0].id);
   assert.notEqual(imported.ideas[0].id, 'root');
@@ -204,7 +229,7 @@ async function run() {
   assert(source.includes("if(!hasContent){box.hidden=true;if(canvas.dataset.painted!=='1')return;"), 'Repainting the overlay is skipped entirely while nothing is painted on it');
   assert(source.includes("const painted=state.inkSelection.size>0||$('#inkOverlay').dataset.painted==='1'"), 'Starting a stroke only clears the overlay when something is painted on it');
   assert(source.includes('const rect=inkCanvasRect||(inkCanvasRect=canvas.getBoundingClientRect())'), 'Ink sampling reuses cached canvas bounds instead of forcing layout for every sample');
-  assert(/strokeTouch=coarse;[^;]*guideSnap=null;inkCanvasRect=canvas\.getBoundingClientRect\(\);/.test(source), 'Each stroke resets guide snapping and refreshes the cached ink bounds');
+  assert(/strokeTouch=event\.pointerType==='touch';[^;]*guideSnap=null;inkCanvasRect=canvas\.getBoundingClientRect\(\);/.test(source), 'Each stroke distinguishes touch from pen, resets guide snapping, and refreshes cached bounds');
   assert(source.includes('inkCanvasRect = null;'), 'Pan, zoom and fit invalidate the cached ink bounds');
   assert(source.includes('transformFrame=requestAnimationFrame(apply)') && source.includes('translate3d('), 'Canvas transforms are coalesced to compositor animation frames');
   assert(source.includes('beginCanvasMotion()') && source.includes('endCanvasMotion(140)'), 'Pan, pinch and wheel interactions enter a temporary lightweight rendering state');
@@ -218,6 +243,12 @@ async function run() {
   assert(css.includes('Desktop collapse preferences must never hide a full-screen mobile stage.') && css.includes('.app-shell.nav-collapsed .nav-pane,.app-shell.notes-collapsed .notes-pane'), 'Compact portrait CSS keeps every staged page visible despite stale desktop classes');
   assert(source.includes('palmLimit=coarse?140:24'), 'Finger contacts draw on touch-only devices while pen-first devices keep the original 24px palm rule');
   assert(source.includes("baseMinimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7"), 'The pen keeps its dense .22 sampling while touch strokes filter wider');
+  assert(source.includes("const rawPointerSupported='onpointerrawupdate' in window") && source.includes('drawLiveInkSegment(context,stroke)'), 'Pen input uses raw updates and a constant-cost live segment path when available');
+  assert(source.includes("state.storageMode='browser'") && source.includes("dataDb: 'ramizom.powermind.browser-data'"), 'Browsers without direct folder access use the IndexedDB workspace backend');
+  assert(source.includes("if(state.storageMode==='browser')return await this.saveBrowser(db)") && source.includes("store.put(previous,'backup')"), 'Browser storage keeps an atomic current workspace plus a recovery snapshot');
+  assert(source.includes("const nativeFolderAvailable = ()") && source.includes("typeof window.showDirectoryPicker === 'function'"), 'Direct-folder mode remains capability-gated for supporting Chrome and Edge environments');
+  assert(html.includes('id="exportAllData"') && html.includes('id="importAllData"') && html.includes('id="browserImportInput"'), 'Portable whole-workspace backup controls are always available in settings');
+  assert(source.includes('deleteCrossBlockSelection') && source.includes('mergeAtBoundary'), 'The continuous editor controls cross-line deletion and boundary merges without corrupting saved blocks');
   assert(source.includes("startsWith('eraser')?Math.max(baseMinimum,inkEraserRadius"), 'Wide erasers discard redundant sub-pixel samples without leaving gaps');
   assert(source.includes("if(source.pointerType==='pen')next.p=last.p*.58+next.p*.42"), 'Pen pressure is smoothed without delaying pointer coordinates');
   assert(source.includes("completed.mode==='eraser-pixel'"), 'Point erasing commits vector geometry instead of leaving a permanent raster mask');
@@ -237,6 +268,8 @@ async function run() {
   assert(source.includes("window.addEventListener('pointermove',move,{passive:true})"), 'A drag tracks on window so a dropped pointer capture cannot strand a node');
   assert(source.includes('if(pointer.pointerId!==dragId)return;'), 'A stray second pointer cannot drive an active drag');
   assert(source.includes("window.removeEventListener('pointermove',move)"), 'Drag listeners are always removed when the drag ends');
+  assert(source.includes('dragFrame=requestAnimationFrame(applyMove)'), 'Mind-map nodes and connections are committed together at most once per animation frame');
+  assert(source.includes("path.setAttribute('d'") && source.includes('path.dataset.connectionId=idea.id'), 'Mind-map dragging updates stable SVG paths instead of rebuilding the entire connection layer');
   assert(!source.includes("element.addEventListener('pointermove',move)"), 'No drag binds its move handler to the dragged element');
   assert(css.includes('.idea-node.dragging {') && css.includes('.idea-node.group-dragging {'), 'Dragging a node or its whole map is visible');
   assert(source.includes('idea.width=clamp(Number(idea.width)||220,160,720)') && source.includes('data-idea-resize'), 'Mind-map node widths migrate safely and can be resized');

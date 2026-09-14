@@ -1,35 +1,77 @@
-# Ramizom PowerMind
+# Ramizom PowerMind Preview
 
-Ramizom PowerMind is a visual note workspace combining continuous documents, mind maps, handwriting, images, and formulas on one infinite canvas.
+Ramizom PowerMind Preview is a local-first visual notebook that combines continuous documents, mind maps, handwriting, images, and formulas on one infinite canvas. Its interface follows Microsoft Fluent and WinUI design principles while remaining a dependency-free web application.
+
+> [!IMPORTANT]
+> This is preview software. Keep regular backups of important notes and test your target browser and hardware before relying on it for production data.
+
+## Highlights
+
+- Continuous rich-text documents with multiple movable editors per note
+- Mind maps with free positioning, resizing, snapping, and automatic layout
+- Low-latency pen and touch input with pressure, lasso selection, and erasers
+- Workspaces, folders, notes, favorites, trash, search, and sorting
+- Images, links, formulas, reading mode, printing, and PDF export
+- Eight interface languages through `i18n.js`
+- Installable PWA metadata without a service worker or offline application cache
+- No analytics, telemetry, accounts, or third-party runtime requests
+
+## Browser storage model
+
+PowerMind selects the safest available local storage mode without changing the user experience:
+
+- Chrome and Edge use the File System Access API when available. The user selects a folder, and PowerMind stores a visible `powermind.workspace.json` manifest plus individual files in `notes/`.
+- Firefox, Safari, iOS, and iPadOS use IndexedDB with a current snapshot and a recovery snapshot. Full-workspace JSON import and export are available in Settings.
+
+Do not select the source repository itself as a note workspace. Workspace data is ignored by Git as a safeguard, but source code and personal data should always live in separate directories.
 
 ## Run locally
 
-Serve this directory over HTTPS or localhost and open it in a current Chromium-based browser. PowerMind requires the File System Access API and stops before editing when safe direct-folder access is unavailable.
+No build step or package installation is required. Serve the repository over localhost:
 
-## Data and privacy
+```sh
+npx serve .
+```
 
-The user chooses a system folder before editing. PowerMind writes a visible `powermind.workspace.json` manifest and individual note files under `notes/`. Note content is not uploaded, no analytics or telemetry is included, and the application makes no third-party network requests.
+Then open the printed local URL in a current Chrome, Edge, Firefox, or Safari release. Opening `index.html` directly through `file://` is unsupported because browser storage and security behavior differs from an HTTP origin.
 
-Do not select this source repository as a personal notes folder. If selected accidentally, `.gitignore` excludes PowerMind workspace data from commits.
-
-## PWA behavior
-
-The Web App Manifest enables installation without a service worker. There is no application cache, so a stale offline shell cannot hide source updates. Regular icons retain the brand's rounded silhouette; full-bleed maskable icons allow Android and Chrome to apply the platform corner shape exactly once. The page updates `theme-color` before first paint and whenever the selected theme or accent changes.
+Any static HTTPS host can serve the project in production. Configure restrictive security headers at the hosting layer; recommended policy examples are documented in [SECURITY.md](SECURITY.md).
 
 ## Quality checks
 
-Run the dependency-free regression suite before release:
+Run the dependency-free regression suite:
 
-```text
-node tests/regression.cjs
+```sh
+npm test
 ```
 
-The suite checks syntax, editor invariants, PWA metadata and assets, platform gating, translations, unique IDs, import sanitization, folder persistence, ink geometry, touch/pen performance paths, and mind-map behavior.
+The suite validates JavaScript syntax, editor invariants, import sanitization, PWA metadata, local assets, translation coverage, storage behavior, ink geometry, touch and pen performance paths, and mind-map interactions.
 
-## Release checklist
+## Project structure
 
-- Test folder selection, save, rename, reopen, and close-folder flows in Edge and Chrome.
-- Test touch, stylus, print/PDF, and portrait navigation on target hardware.
-- Confirm the installed app receives theme-color changes and uses the maskable launch icon.
-- Keep source code and private note workspaces in separate folders.
-- Serve production builds over HTTPS with restrictive security headers.
+| Path | Purpose |
+| --- | --- |
+| `index.html` | Application shell, accessible markup, SVG icon symbols, and PWA metadata |
+| `style.css` | Fluent visual system, responsive layouts, print styling, and interaction states |
+| `app.js` | Application state, storage adapters, editors, canvas tools, and UI controllers |
+| `i18n.js` | All localized client-facing copy and native language names |
+| `manifest.webmanifest` | Installable PWA declaration; intentionally no service worker |
+| `tests/regression.cjs` | Dependency-free source and data regression tests |
+| `docs/ARCHITECTURE.md` | Maintainer guide to state, persistence, rendering, and extension points |
+
+## Contributing
+
+Bug reports and focused pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing application behavior. In particular:
+
+- Keep source code, comments, tests, and project documentation in English.
+- Put all localized user-facing copy in `i18n.js`.
+- Preserve existing note layout and storage compatibility unless a migration is deliberate and tested.
+- Update the static asset query version in `index.html`, `manifest.webmanifest`, and the regression expectations after user-visible changes.
+
+## AI development disclosure
+
+This project is substantially designed and implemented with the assistance of generative AI. AI-assisted changes are treated like any other contribution: maintainers and contributors are responsible for reviewing, testing, licensing, security, accessibility, and correctness before release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution policy.
+
+## License
+
+Ramizom PowerMind Preview is available under the [MIT License](LICENSE).

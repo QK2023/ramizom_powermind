@@ -15,6 +15,7 @@ coverage/
 playwright-report/
 test-results/
 screenshots/
+*.trace.zip
 
 # Temporary and scratch folders
 .qa-*/
@@ -24,6 +25,10 @@ screenshots/
 .history/
 .edge-*-profile/
 .chrome-*-profile/
+.playwright/
+.agents/
+.codex/
+.claude/
 *.bak
 *.orig
 *.rej
@@ -48,3 +53,5 @@ Desktop.ini
 .env
 .env.*
 !.env.example
+*.local
+.envrc
