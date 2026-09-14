@@ -1,56 +1,59 @@
 # Ramizom PowerMind Preview
 
-Ramizom PowerMind Preview is a local-first visual notebook that combines continuous documents, mind maps, handwriting, images, and formulas on one infinite canvas. Its interface follows Microsoft Fluent and WinUI design principles while remaining a dependency-free web application.
+Ramizom PowerMind Preview is a local-first visual notebook for continuous documents, mind maps, handwriting, images, and formulas on one infinite canvas. It is a dependency-free web application inspired by Microsoft Fluent and WinUI design.
 
 > [!IMPORTANT]
-> This is preview software. Keep regular backups of important notes and test your target browser and hardware before relying on it for production data.
+> **AI-assisted project:** PowerMind is substantially designed and implemented with generative AI. Every contribution, whether human-written or AI-assisted, must still be reviewed and tested by a person. Maintainers and contributors remain responsible for security, privacy, accessibility, licensing, and correctness.
 
-## Highlights
+> [!WARNING]
+> PowerMind is preview software. Keep regular exports of important work and validate the application on your target browser and hardware before using it for critical data.
 
-- Continuous rich-text documents with multiple movable editors per note
-- Mind maps with free positioning, resizing, snapping, and automatic layout
-- Low-latency pen and touch input with pressure, lasso selection, and erasers
-- Workspaces, folders, notes, favorites, trash, search, and sorting
+## Features
+
+- A continuous rich-text document experience with multiple movable editors in one note
+- Mind maps with free positioning, multiline nodes, resizing, snapping, and automatic layout
+- Low-latency mouse, touch, and pen input with pressure, lasso selection, and two eraser modes
+- Workspaces, folders, notes, favorites, trash, search, naming, and configurable sorting
 - Images, links, formulas, reading mode, printing, and PDF export
-- Eight interface languages through `i18n.js`
-- Installable PWA metadata without a service worker or offline application cache
-- No analytics, telemetry, accounts, or third-party runtime requests
+- Eight interface languages provided through `i18n.js`
+- Installable PWA metadata without a service worker or offline asset cache
+- Light and dark themes, selectable accent colors, and responsive desktop, tablet, and phone layouts
+- No application analytics, accounts, advertising, or third-party runtime requests
 
-## Browser storage model
+## Data and storage
 
-PowerMind selects the safest available local storage mode without changing the user experience:
+PowerMind selects its storage backend according to browser capabilities:
 
-- Chrome and Edge use the File System Access API when available. The user selects a folder, and PowerMind stores a visible `powermind.workspace.json` manifest plus individual files in `notes/`.
-- Firefox, Safari, iOS, and iPadOS use IndexedDB with a current snapshot and a recovery snapshot. Full-workspace JSON import and export are available in Settings.
+- Chrome and Edge use the File System Access API when it is available. The user chooses a system folder, and PowerMind writes a visible `powermind.workspace.json` manifest plus individual note files under `notes/`.
+- Firefox, Safari, iOS, and iPadOS use IndexedDB with a current snapshot and a recovery snapshot. Portable full-workspace JSON import and export remain available in Settings.
 
-Do not select the source repository itself as a note workspace. Workspace data is ignored by Git as a safeguard, but source code and personal data should always live in separate directories.
+Data stays on the device unless the user explicitly exports, copies, or synchronizes the selected folder with another service. Do not choose the source repository itself as a note workspace. Source code and personal notes should live in separate directories.
+
+## Browser support
+
+Use a current version of Chrome, Edge, Firefox, or Safari over HTTPS or localhost. Folder-backed workspaces require a browser that implements the File System Access API; other supported browsers automatically use the IndexedDB fallback.
+
+Opening `index.html` directly through `file://` is unsupported because browser permissions, storage, modules, and PWA behavior differ from a secure HTTP origin.
 
 ## Run locally
 
-No build step or package installation is required. Serve the repository over localhost:
+The client has no runtime dependencies and does not require compilation. Serve the repository with any static HTTP server, for example:
 
 ```sh
 npx serve .
 ```
 
-Then open the printed local URL in a current Chrome, Edge, Firefox, or Safari release. Opening `index.html` directly through `file://` is unsupported because browser storage and security behavior differs from an HTTP origin.
+Then open the printed localhost address. To validate the production assets and run the regression suite:
 
-Any static HTTPS host can serve the project in production. Configure restrictive security headers at the hosting layer; recommended policy examples are documented in [SECURITY.md](SECURITY.md).
+```sh
+npm run check
+```
 
-### Cloudflare deployment
+## Deploy to Cloudflare Workers
 
-For Cloudflare Pages, use these build settings:
+PowerMind is published directly from the repository root. The checked-in `.assetsignore` is deny-by-default and allows Wrangler to upload only the client application files; dependencies, tests, documentation, Git metadata, and development tools are excluded.
 
-| Setting | Value |
-| --- | --- |
-| Framework preset | None |
-| Build command | `npm run build` |
-| Build output directory | `.` |
-| Root directory | Leave blank |
-
-The app is served directly from the repository root. The build command validates the public files, while `.assetsignore` prevents dependencies, tests, documentation, and repository metadata from being published.
-
-For Cloudflare Workers Builds, the build and deploy commands are separate. Use:
+Use these Workers Builds settings:
 
 | Setting | Value |
 | --- | --- |
@@ -58,47 +61,49 @@ For Cloudflare Workers Builds, the build and deploy commands are separate. Use:
 | Deploy command | `npm run deploy:cloudflare` |
 | Root directory | Leave blank |
 
-The checked-in `wrangler.jsonc` publishes the repository root and disables Wrangler telemetry for this project. The strict `.assetsignore` allowlist ensures that only the client application is uploaded, so packages such as `node_modules/workerd` never become static assets.
+`wrangler.jsonc` sets the asset directory to `.` and disables Wrangler telemetry for this project. Do not replace the deploy command with an unconfigured `wrangler deploy --assets .`; the checked-in command and configuration are the deployment source of truth.
+
+For other static HTTPS hosts, publish only the files explicitly allowed by `.assetsignore`. Recommended production security headers are provided in `_headers` and explained in [SECURITY.md](SECURITY.md).
 
 ## Quality checks
 
-Run the dependency-free regression suite:
+The repository uses a dependency-free Node.js regression suite:
 
 ```sh
 npm test
 ```
 
-The suite validates JavaScript syntax, editor invariants, import sanitization, PWA metadata, local assets, translation coverage, storage behavior, ink geometry, touch and pen performance paths, and mind-map interactions.
+The suite checks JavaScript syntax, editor invariants, import sanitization, PWA metadata, localization coverage, storage behavior, ink geometry and performance paths, touch interactions, and mind-map behavior. The production validation command also rejects missing public assets and any individual asset larger than Cloudflare's 25 MiB limit.
 
 ## Project structure
 
 | Path | Purpose |
 | --- | --- |
-| `index.html` | Application shell, accessible markup, SVG icon symbols, and PWA metadata |
+| `index.html` | Application shell, accessible markup, SVG symbols, and PWA metadata |
 | `style.css` | Fluent visual system, responsive layouts, print styling, and interaction states |
 | `app.js` | Application state, storage adapters, editors, canvas tools, and UI controllers |
-| `i18n.js` | All localized client-facing copy and native language names |
+| `i18n.js` | Localized client-facing copy and native language names |
 | `manifest.webmanifest` | Installable PWA declaration; intentionally no service worker |
+| `.assetsignore` | Deny-by-default Cloudflare asset allowlist |
+| `wrangler.jsonc` | Cloudflare Workers root deployment configuration |
+| `_headers` | Recommended security and cache headers for compatible static hosts |
 | `tests/regression.cjs` | Dependency-free source and data regression tests |
-| `tools/build.cjs` | Production asset and size validation for static hosts |
-| `.assetsignore` | Root deployment allowlist that excludes dependencies and project files |
-| `wrangler.jsonc` | Workers root-directory deployment configuration |
-| `_headers` | Cloudflare Pages security and cache headers |
-| `docs/ARCHITECTURE.md` | Maintainer guide to state, persistence, rendering, and extension points |
+| `tools/build.cjs` | Production asset presence and size validation |
+| `docs/ARCHITECTURE.md` | Maintainer guide to persistence, rendering, state, and extension points |
 
 ## Contributing
 
-Bug reports and focused pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing application behavior. In particular:
+Bug reports and focused pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 - Keep source code, comments, tests, and project documentation in English.
-- Put all localized user-facing copy in `i18n.js`.
-- Preserve existing note layout and storage compatibility unless a migration is deliberate and tested.
-- Update the static asset query version in `index.html`, `manifest.webmanifest`, and the regression expectations after user-visible changes.
+- Keep translated client-facing copy in `i18n.js`.
+- Clearly disclose meaningful AI assistance in contributions.
+- Review generated code and content instead of treating AI output as authoritative.
+- Preserve note layout and storage compatibility unless a migration is intentional and tested.
+- Update the static asset query version and regression expectations after user-visible asset changes.
 
-## AI development disclosure
-
-This project is substantially designed and implemented with the assistance of generative AI. AI-assisted changes are treated like any other contribution: maintainers and contributors are responsible for reviewing, testing, licensing, security, accessibility, and correctness before release. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution policy.
+Security issues should be reported according to [SECURITY.md](SECURITY.md), not through a public issue.
 
 ## License
 
-Ramizom PowerMind Preview is available under the [MIT License](LICENSE).
+Ramizom PowerMind Preview is released under the [MIT License](LICENSE).

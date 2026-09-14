@@ -38,7 +38,7 @@ async function run() {
   const localeTables=i18nContext.window.PM_I18N,englishKeys=Object.keys(localeTables.en);
   Object.entries(localeTables).forEach(([locale,table])=>assert.deepEqual(englishKeys.filter(key=>!(key in table)),[],`Locale covers every English key: ${locale}`));
   assert(fs.readFileSync(path.join(projectRoot,'LICENSE'),'utf8').startsWith('MIT License'), 'The repository includes an MIT license');
-  assert(fs.readFileSync(path.join(projectRoot,'README.md'),'utf8').includes('AI development disclosure'), 'The README discloses substantial AI assistance');
+  assert(fs.readFileSync(path.join(projectRoot,'README.md'),'utf8').includes('**AI-assisted project:**'), 'The README prominently discloses substantial AI assistance');
   const packageMetadata=JSON.parse(fs.readFileSync(path.join(projectRoot,'package.json'),'utf8'));
   assert.equal(packageMetadata.scripts.build,'node tools/build.cjs','Static hosts have a deterministic production build command');
   assert.equal(packageMetadata.scripts['deploy:cloudflare'],'npx wrangler deploy --config wrangler.jsonc','Workers deploy through the checked-in configuration');
