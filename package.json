@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "node tools/build.cjs",
-    "deploy:cloudflare": "npx wrangler deploy --assets ./dist",
+    "deploy:cloudflare": "npx wrangler deploy --config wrangler.jsonc",
     "test": "node tests/regression.cjs",
     "check": "node --check app.js && node --check i18n.js && node tests/regression.cjs && node tools/build.cjs"
   },

@@ -58,7 +58,7 @@ For Cloudflare Workers Builds, the build and deploy commands are separate. Use:
 | Deploy command | `npm run deploy:cloudflare` |
 | Root directory | Leave blank |
 
-The deploy command explicitly publishes `dist/`. Do not use the repository root (`.`) as the Workers asset directory: doing so includes development files such as `node_modules/workerd`, which exceeds Cloudflare's 25 MiB per-asset limit.
+The checked-in `wrangler.jsonc` explicitly publishes `dist/` and disables Wrangler telemetry for this project. Do not add `--assets .` to the deploy command: command-line arguments override the checked-in configuration and would include development files such as `node_modules/workerd`, which exceeds Cloudflare's 25 MiB per-asset limit.
 
 ## Quality checks
 
@@ -81,6 +81,7 @@ The suite validates JavaScript syntax, editor invariants, import sanitization, P
 | `manifest.webmanifest` | Installable PWA declaration; intentionally no service worker |
 | `tests/regression.cjs` | Dependency-free source and data regression tests |
 | `tools/build.cjs` | Allowlisted production build for static hosts such as Cloudflare Pages |
+| `wrangler.jsonc` | Workers deployment configuration restricted to the `dist/` output |
 | `_headers` | Cloudflare Pages security and cache headers |
 | `docs/ARCHITECTURE.md` | Maintainer guide to state, persistence, rendering, and extension points |
 

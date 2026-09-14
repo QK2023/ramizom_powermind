@@ -41,7 +41,10 @@ async function run() {
   assert(fs.readFileSync(path.join(projectRoot,'README.md'),'utf8').includes('AI development disclosure'), 'The README discloses substantial AI assistance');
   const packageMetadata=JSON.parse(fs.readFileSync(path.join(projectRoot,'package.json'),'utf8'));
   assert.equal(packageMetadata.scripts.build,'node tools/build.cjs','Static hosts have a deterministic production build command');
-  assert.equal(packageMetadata.scripts['deploy:cloudflare'],'npx wrangler deploy --assets ./dist','Workers deploy only the allowlisted production output');
+  assert.equal(packageMetadata.scripts['deploy:cloudflare'],'npx wrangler deploy --config wrangler.jsonc','Workers deploy through the checked-in configuration');
+  const wranglerConfig=JSON.parse(fs.readFileSync(path.join(projectRoot,'wrangler.jsonc'),'utf8'));
+  assert.equal(wranglerConfig.assets.directory,'./dist','Workers deploy only the allowlisted production output');
+  assert.equal(wranglerConfig.send_metrics,false,'Wrangler telemetry is disabled for this project');
   assert(fs.readFileSync(path.join(projectRoot,'tools','build.cjs'),'utf8').includes("'index.html'"),'The production build explicitly includes the application entry point');
   assert(fs.readFileSync(path.join(projectRoot,'tools','build.cjs'),'utf8').includes('cloudflareAssetLimit'),'The production build rejects assets above Cloudflare\'s per-file limit');
   assert(fs.readFileSync(path.join(projectRoot,'_headers'),'utf8').includes('Content-Security-Policy:'),'Cloudflare Pages receives baseline security headers');
