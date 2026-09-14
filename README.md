@@ -37,6 +37,19 @@ Then open the printed local URL in a current Chrome, Edge, Firefox, or Safari re
 
 Any static HTTPS host can serve the project in production. Configure restrictive security headers at the hosting layer; recommended policy examples are documented in [SECURITY.md](SECURITY.md).
 
+### Cloudflare Pages
+
+Use the following Pages build settings:
+
+| Setting | Value |
+| --- | --- |
+| Framework preset | None |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | Leave blank |
+
+The build is dependency-free and copies only the public application assets into `dist/`. The included `_headers` file is applied by Cloudflare Pages from that output directory.
+
 ## Quality checks
 
 Run the dependency-free regression suite:
@@ -57,6 +70,8 @@ The suite validates JavaScript syntax, editor invariants, import sanitization, P
 | `i18n.js` | All localized client-facing copy and native language names |
 | `manifest.webmanifest` | Installable PWA declaration; intentionally no service worker |
 | `tests/regression.cjs` | Dependency-free source and data regression tests |
+| `tools/build.cjs` | Allowlisted production build for static hosts such as Cloudflare Pages |
+| `_headers` | Cloudflare Pages security and cache headers |
 | `docs/ARCHITECTURE.md` | Maintainer guide to state, persistence, rendering, and extension points |
 
 ## Contributing

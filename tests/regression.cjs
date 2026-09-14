@@ -39,6 +39,10 @@ async function run() {
   Object.entries(localeTables).forEach(([locale,table])=>assert.deepEqual(englishKeys.filter(key=>!(key in table)),[],`Locale covers every English key: ${locale}`));
   assert(fs.readFileSync(path.join(projectRoot,'LICENSE'),'utf8').startsWith('MIT License'), 'The repository includes an MIT license');
   assert(fs.readFileSync(path.join(projectRoot,'README.md'),'utf8').includes('AI development disclosure'), 'The README discloses substantial AI assistance');
+  const packageMetadata=JSON.parse(fs.readFileSync(path.join(projectRoot,'package.json'),'utf8'));
+  assert.equal(packageMetadata.scripts.build,'node tools/build.cjs','Static hosts have a deterministic production build command');
+  assert(fs.readFileSync(path.join(projectRoot,'tools','build.cjs'),'utf8').includes("'index.html'"),'The production build explicitly includes the application entry point');
+  assert(fs.readFileSync(path.join(projectRoot,'_headers'),'utf8').includes('Content-Security-Policy:'),'Cloudflare Pages receives baseline security headers');
   assert(source.includes('function renderUnifiedEditors('), 'Editors share one renderer');
   assert(source.includes('function bindUnifiedEditor('), 'Editors share one event binder');
   assert.equal((source.match(/function unifiedEditorToolbar\(/g) || []).length, 1, 'Only one editor toolbar implementation exists');
@@ -73,7 +77,7 @@ async function run() {
   assert(source.includes('const commandKey=event.ctrlKey||event.metaKey') && source.includes("commandKey&&event.key.toLowerCase()==='z'"), 'Ctrl/Cmd+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=25"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=26"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind Preview');
   assert.equal(manifest.short_name, 'PowerMind Preview');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -87,7 +91,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=25"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=26"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -124,7 +128,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=25') && html.includes('style.css?v=25') && html.includes('app.js?v=25'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=26') && html.includes('style.css?v=26') && html.includes('app.js?v=26'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);

@@ -5,8 +5,9 @@
   "description": "A local-first visual notebook for documents, mind maps, and handwriting.",
   "license": "MIT",
   "scripts": {
+    "build": "node tools/build.cjs",
     "test": "node tests/regression.cjs",
-    "check": "node --check app.js && node --check i18n.js && node tests/regression.cjs"
+    "check": "node --check app.js && node --check i18n.js && node tests/regression.cjs && node tools/build.cjs"
   },
   "engines": {
     "node": ">=18"
