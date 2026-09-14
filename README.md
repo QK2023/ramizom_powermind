@@ -45,10 +45,10 @@ For Cloudflare Pages, use these build settings:
 | --- | --- |
 | Framework preset | None |
 | Build command | `npm run build` |
-| Build output directory | `dist` |
+| Build output directory | `.` |
 | Root directory | Leave blank |
 
-The build is dependency-free and copies only the public application assets into `dist/`. The included `_headers` file is applied by Cloudflare Pages from that output directory.
+The app is served directly from the repository root. The build command validates the public files, while `.assetsignore` prevents dependencies, tests, documentation, and repository metadata from being published.
 
 For Cloudflare Workers Builds, the build and deploy commands are separate. Use:
 
@@ -58,7 +58,7 @@ For Cloudflare Workers Builds, the build and deploy commands are separate. Use:
 | Deploy command | `npm run deploy:cloudflare` |
 | Root directory | Leave blank |
 
-The checked-in `wrangler.jsonc` explicitly publishes `dist/` and disables Wrangler telemetry for this project. Do not add `--assets .` to the deploy command: command-line arguments override the checked-in configuration and would include development files such as `node_modules/workerd`, which exceeds Cloudflare's 25 MiB per-asset limit.
+The checked-in `wrangler.jsonc` publishes the repository root and disables Wrangler telemetry for this project. The strict `.assetsignore` allowlist ensures that only the client application is uploaded, so packages such as `node_modules/workerd` never become static assets.
 
 ## Quality checks
 
@@ -80,8 +80,9 @@ The suite validates JavaScript syntax, editor invariants, import sanitization, P
 | `i18n.js` | All localized client-facing copy and native language names |
 | `manifest.webmanifest` | Installable PWA declaration; intentionally no service worker |
 | `tests/regression.cjs` | Dependency-free source and data regression tests |
-| `tools/build.cjs` | Allowlisted production build for static hosts such as Cloudflare Pages |
-| `wrangler.jsonc` | Workers deployment configuration restricted to the `dist/` output |
+| `tools/build.cjs` | Production asset and size validation for static hosts |
+| `.assetsignore` | Root deployment allowlist that excludes dependencies and project files |
+| `wrangler.jsonc` | Workers root-directory deployment configuration |
 | `_headers` | Cloudflare Pages security and cache headers |
 | `docs/ARCHITECTURE.md` | Maintainer guide to state, persistence, rendering, and extension points |
 

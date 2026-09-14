@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const projectRoot = path.resolve(__dirname, '..');
-const outputDirectory = path.join(projectRoot, 'dist');
 const cloudflareAssetLimit = 25 * 1024 * 1024;
 const publicFiles = [
   'index.html',
@@ -17,8 +16,7 @@ const publicFiles = [
   'icon-512.png',
   'icon-maskable-192.png',
   'icon-maskable-512.png',
-  'apple-touch-icon.png',
-  '_headers'
+  'apple-touch-icon.png'
 ];
 
 for (const file of publicFiles) {
@@ -28,20 +26,19 @@ for (const file of publicFiles) {
   }
 }
 
-fs.rmSync(outputDirectory, { recursive: true, force: true });
-fs.mkdirSync(outputDirectory, { recursive: true });
-
 for (const file of publicFiles) {
   const source = path.join(projectRoot, file);
   const size = fs.statSync(source).size;
   if (size > cloudflareAssetLimit) {
     throw new Error(`Cloudflare asset exceeds 25 MiB: ${file}`);
   }
-  fs.copyFileSync(source, path.join(outputDirectory, file));
 }
 
-if (!fs.existsSync(path.join(outputDirectory, 'index.html'))) {
-  throw new Error('Build output does not contain a top-level index.html');
+const assetIgnore = fs.readFileSync(path.join(projectRoot, '.assetsignore'), 'utf8');
+for (const file of publicFiles) {
+  if (!assetIgnore.includes(`!${file}`)) {
+    throw new Error(`Public asset is not allowlisted in .assetsignore: ${file}`);
+  }
 }
 
-console.log(`Built ${publicFiles.length} static assets in dist/`);
+console.log(`Validated ${publicFiles.length} root-level static assets for Cloudflare`);

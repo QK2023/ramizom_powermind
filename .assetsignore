@@ -1,0 +1,13 @@
+# Publish only the dependency-free client files from the repository root.
+*
+!index.html
+!app.js
+!i18n.js
+!style.css
+!manifest.webmanifest
+!icon.svg
+!icon-192.png
+!icon-512.png
+!icon-maskable-192.png
+!icon-maskable-512.png
+!apple-touch-icon.png

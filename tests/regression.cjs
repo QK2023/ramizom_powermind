@@ -43,8 +43,11 @@ async function run() {
   assert.equal(packageMetadata.scripts.build,'node tools/build.cjs','Static hosts have a deterministic production build command');
   assert.equal(packageMetadata.scripts['deploy:cloudflare'],'npx wrangler deploy --config wrangler.jsonc','Workers deploy through the checked-in configuration');
   const wranglerConfig=JSON.parse(fs.readFileSync(path.join(projectRoot,'wrangler.jsonc'),'utf8'));
-  assert.equal(wranglerConfig.assets.directory,'./dist','Workers deploy only the allowlisted production output');
+  assert.equal(wranglerConfig.assets.directory,'.','Workers serve the dependency-free application directly from the repository root');
   assert.equal(wranglerConfig.send_metrics,false,'Wrangler telemetry is disabled for this project');
+  const assetIgnore=fs.readFileSync(path.join(projectRoot,'.assetsignore'),'utf8');
+  assert(assetIgnore.startsWith('# Publish only')&&assetIgnore.includes('\n*\n'),'Root asset deployment uses a deny-by-default allowlist');
+  ['index.html','app.js','i18n.js','style.css','manifest.webmanifest'].forEach(file=>assert(assetIgnore.includes(`!${file}`),`Root asset allowlist includes ${file}`));
   assert(fs.readFileSync(path.join(projectRoot,'tools','build.cjs'),'utf8').includes("'index.html'"),'The production build explicitly includes the application entry point');
   assert(fs.readFileSync(path.join(projectRoot,'tools','build.cjs'),'utf8').includes('cloudflareAssetLimit'),'The production build rejects assets above Cloudflare\'s per-file limit');
   assert(fs.readFileSync(path.join(projectRoot,'_headers'),'utf8').includes('Content-Security-Policy:'),'Cloudflare Pages receives baseline security headers');

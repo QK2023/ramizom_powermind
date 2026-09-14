@@ -4,7 +4,7 @@
   "compatibility_date": "2026-09-15",
   "send_metrics": false,
   "assets": {
-    "directory": "./dist",
+    "directory": ".",
     "not_found_handling": "single-page-application"
   }
 }
