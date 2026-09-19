@@ -85,7 +85,7 @@ async function run() {
   assert(source.includes('const commandKey=event.ctrlKey||event.metaKey') && source.includes("commandKey&&event.key.toLowerCase()==='z'"), 'Ctrl/Cmd+Z is handled consistently inside and outside the document editor');
   assert(source.includes('restoreHistoryFocus(focus)'), 'Undo and redo restore the active editor caret');
   assert(!html.includes('id="imageInput"'), 'Obsolete global image input is removed');
-  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=26"'), 'Page declares its versioned PWA manifest');
+  assert(html.includes('rel="manifest" href="manifest.webmanifest?v=27"'), 'Page declares its versioned PWA manifest');
   assert.equal(manifest.name, 'Ramizom PowerMind Preview');
   assert.equal(manifest.short_name, 'PowerMind Preview');
   assert.equal(manifest.description, 'A visual note workspace for blocks, mind maps, and handwriting.');
@@ -99,7 +99,7 @@ async function run() {
   });
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('any') || !String(icon.purpose || '').includes('maskable')), 'Rounded brand art is not also declared maskable');
   assert(manifest.icons.every(icon => !String(icon.purpose || '').includes('maskable')), 'The rounded brand silhouette is used consistently instead of a square maskable fallback');
-  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=26"'), 'Page declares a versioned Apple touch icon');
+  assert(html.includes('rel="apple-touch-icon" href="apple-touch-icon.png?v=27"'), 'Page declares a versioned Apple touch icon');
   assert(html.includes('id="unsupportedGate"'), 'An unsupported-platform gate exists before the app boots');
   assert(html.includes('id="unsupportedReason"'), 'The unsupported-platform gate explains the reason');
   assert(html.includes('id="unsupportedLanguage"'), 'The unsupported-platform gate offers a language selector');
@@ -136,7 +136,7 @@ async function run() {
   assert(/\bbottom\s*:/.test(fluentOptions[1]), 'The picker panel base rule pins its own bottom edge so a stray inset cannot collapse it');
   assert(!/\.fluent-options[^{]*\{[^}]*position\s*:\s*fixed/.test(css), 'No picker panel override can leak a fixed inset into the base rule');
   assert(!source.includes('serviceWorker')&&!fs.existsSync(path.join(projectRoot,'sw.js')), 'The installable app has no service worker or application cache');
-  assert(html.includes('manifest.webmanifest?v=26') && html.includes('style.css?v=26') && html.includes('app.js?v=26'), 'Updated app resources receive a cache version');
+  assert(html.includes('manifest.webmanifest?v=27') && html.includes('style.css?v=27') && html.includes('app.js?v=27'), 'Updated app resources receive a cache version');
   assert(html.includes('id="i-app-logo"') && (html.match(/href="#i-app-logo"/g)||[]).length===3, 'Startup and folder gates use the inline rounded brand mark');
   assert(!css.includes('background:url("icon.svg'), 'The splash mark does not wait for an external CSS background image');
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -253,6 +253,7 @@ async function run() {
   assert((css.match(/@media \(max-width:1100px\) and \(orientation:portrait\)/g)||[]).length>=4, 'Portrait tablets receive the complete full-screen pane and touch layout');
   assert(source.includes("shell.classList.toggle('nav-collapsed',!compact&&") && source.includes("shell.classList.toggle('notes-collapsed',!compact&&"), 'Desktop pane-collapse preferences cannot hide a compact portrait stage');
   assert(css.includes('Desktop collapse preferences must never hide a full-screen mobile stage.') && css.includes('.app-shell.nav-collapsed .nav-pane,.app-shell.notes-collapsed .notes-pane'), 'Compact portrait CSS keeps every staged page visible despite stale desktop classes');
+  assert(css.includes('Settings becomes a vertical, scrollable sheet on narrow portrait screens.') && css.includes('.settings-dialog .folder-setting-actions{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr)') && css.includes('.settings-dialog .setting-row{grid-template-columns:minmax(0,1fr)'), 'Portrait settings keep localized labels and action buttons inside accessible touch targets');
   assert(source.includes('palmLimit=coarse?140:24'), 'Finger contacts draw on touch-only devices while pen-first devices keep the original 24px palm rule');
   assert(source.includes("baseMinimum=source.pointerType==='pen'?.22:strokeTouch?1.2:.7"), 'The pen keeps its dense .22 sampling while touch strokes filter wider');
   assert(source.includes("const rawPointerSupported='onpointerrawupdate' in window") && source.includes('drawLiveInkSegment(context,stroke)'), 'Pen input uses raw updates and a constant-cost live segment path when available');
@@ -281,6 +282,9 @@ async function run() {
   assert(source.includes('if(pointer.pointerId!==dragId)return;'), 'A stray second pointer cannot drive an active drag');
   assert(source.includes("window.removeEventListener('pointermove',move)"), 'Drag listeners are always removed when the drag ends');
   assert(source.includes('dragFrame=requestAnimationFrame(applyMove)'), 'Mind-map nodes and connections are committed together at most once per animation frame');
+  assert(source.includes('captureSnapGeometry(element)') && source.includes('member.element.style.transform=`translate3d('), 'Dragging uses one geometry snapshot and compositor transforms instead of per-frame layout writes');
+  assert(source.includes('const parentMetrics=ideaMetrics.get(parent.id)') && source.includes('cacheIdeaMetrics();\n    drawConnections();'), 'Mind-map connections reuse measured node geometry while dragging');
+  assert(source.includes('if(state.panning||state.pinchActive||state.worldDragging)return;'), 'Canvas coordinate read-outs pause while gestures are active');
   assert(source.includes("path.setAttribute('d'") && source.includes('path.dataset.connectionId=idea.id'), 'Mind-map dragging updates stable SVG paths instead of rebuilding the entire connection layer');
   assert(!source.includes("element.addEventListener('pointermove',move)"), 'No drag binds its move handler to the dragged element');
   assert(css.includes('.idea-node.dragging {') && css.includes('.idea-node.group-dragging {'), 'Dragging a node or its whole map is visible');

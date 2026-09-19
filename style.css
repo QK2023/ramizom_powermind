@@ -338,6 +338,7 @@ body .app-shell.nav-collapsed.notes-collapsed,body .app-shell.focus-mode { grid-
 /* Pan and pinch stay on the compositor. Expensive Fluent effects return as soon as the gesture ends. */
 .canvas-viewport.navigating .document-card { backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:none!important;transition:none!important; }
 .canvas-viewport.navigating .idea-node { box-shadow:none!important;transition:none!important; }
+.canvas-viewport.navigating .document-card.dragging,.canvas-viewport.navigating .idea-node.dragging,.canvas-viewport.navigating .idea-node.group-dragging { will-change:transform; }
 .canvas-viewport.navigating .connection-path { filter:none!important; }
 .canvas-viewport.navigating .document-resize-frame,.canvas-viewport.navigating .document-resize-handle,.canvas-viewport.navigating .node-tools { opacity:0!important;transition:none!important; }
 .canvas-mode-badge { position: absolute; left: 50%; bottom: 15px; z-index: 20; padding: 6px 10px; border-radius: 5px; background: rgba(28,28,30,.88); color: white; box-shadow: var(--shadow-2); opacity: 0; transform: translate(-50%,8px); transition: opacity .16s, transform .16s; pointer-events: none; font-size: 11px; }
@@ -698,6 +699,22 @@ body.theme-dark[data-accent="orange"],body.theme-dark[data-accent="yellow"],body
 .ink-guide-picker{gap:4px;padding-left:8px}.ink-guide-button{height:38px;min-width:44px;padding-inline:8px}
 .canvas-toolbar.ink-active{height:62px!important;min-height:62px!important}.canvas-toolbar.ink-active #inkOptions{min-height:62px!important;padding:7px 12px!important;gap:8px!important}
 @media (max-width:800px){.canvas-toolbar,.canvas-toolbar.ink-active{height:60px!important;min-height:60px!important;padding-inline:7px}.ribbon-group{height:60px;padding:6px 9px;gap:5px}.canvas-toolbar .tool-button,.canvas-toolbar .command-button{height:40px;min-width:48px;padding-inline:9px}.canvas-toolbar.ink-active #inkOptions{min-height:60px!important;padding:6px 9px!important}.ink-mode-picker{height:42px}.ink-mode{height:36px;padding-inline:9px}}
+
+/* Settings becomes a vertical, scrollable sheet on narrow portrait screens. This
+   keeps long localized labels and folder actions inside their own touch targets. */
+@media (max-width:600px) and (orientation:portrait){
+  .settings-dialog{width:calc(100vw - 20px);max-height:calc(100dvh - 20px);overflow:hidden}
+  .settings-dialog form{max-height:calc(100dvh - 20px);padding:16px;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .settings-dialog .dialog-head{margin-bottom:14px}
+  .settings-dialog .setting-row{grid-template-columns:minmax(0,1fr);gap:6px;margin:17px 0}
+  .settings-dialog .setting-row>span{min-width:0;line-height:1.35;overflow-wrap:anywhere}
+  .settings-dialog .fluent-select{min-height:40px;height:auto;padding-block:3px}
+  .settings-dialog .slider-control{min-height:40px}
+  .settings-dialog .folder-setting-card{grid-template-columns:36px minmax(0,1fr);gap:10px;margin-top:20px;padding:12px}
+  .settings-dialog .folder-setting-icon{width:36px;height:36px}
+  .settings-dialog .folder-setting-actions{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-top:2px}
+  .settings-dialog .folder-setting-actions button{width:100%;min-height:42px;height:auto;padding:8px 12px;white-space:normal;line-height:1.28;overflow-wrap:anywhere}
+}
 
 /* Clean, scale-free drafting guides. The ruler extends beyond the whole canvas. */
 .ink-guide[data-guide="ruler"]{width:5200px;height:68px;border-inline:0;border-radius:0;background:linear-gradient(90deg,transparent 0,rgba(245,194,70,.7) 6%,rgba(255,218,112,.82) 18% 82%,rgba(245,194,70,.7) 94%,transparent 100%);box-shadow:0 8px 24px #0003,inset 0 1px #fff9,inset 0 -1px #754b1670}
