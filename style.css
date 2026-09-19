@@ -111,9 +111,9 @@ body.platform-unsupported .app-shell{display:none}
 body.theme-dark .mica-layer { background: rgba(23, 24, 29, .58); }
 body.theme-dark .mica-backdrop{background:radial-gradient(ellipse 72% 84% at 0% 0%,color-mix(in srgb,var(--nav-accent) 28%,#4b2421) 0%,transparent 68%),radial-gradient(ellipse 58% 70% at 100% 100%,color-mix(in srgb,var(--nav-accent) 13%,#494129) 0%,transparent 73%),linear-gradient(132deg,#302426,#25282b 54%,#202c28);filter:saturate(.82) brightness(.74)}
 
-.app-shell { width: 100vw; height: 100vh; display: grid; grid-template-columns: clamp(260px, 18vw, 292px) clamp(286px, 20vw, 326px) minmax(0, 1fr); background: rgba(255,255,255,.08); }
-body .app-shell.nav-collapsed { grid-template-columns:0 clamp(286px,20vw,326px) minmax(0,1fr); }
-body .app-shell.notes-collapsed { grid-template-columns:clamp(260px,18vw,292px) 0 minmax(0,1fr); }
+.app-shell { --navigation-pane-width:clamp(260px,18vw,292px);--notes-pane-width:clamp(286px,20vw,326px);width:100vw;height:100vh;display:grid;grid-template-columns:var(--navigation-pane-width) var(--notes-pane-width) minmax(0,1fr);background:rgba(255,255,255,.08); }
+body .app-shell.nav-collapsed { grid-template-columns:0 var(--notes-pane-width) minmax(0,1fr); }
+body .app-shell.notes-collapsed { grid-template-columns:var(--navigation-pane-width) 0 minmax(0,1fr); }
 body .app-shell.nav-collapsed.notes-collapsed,body .app-shell.focus-mode { grid-template-columns:0 0 minmax(0,1fr); }
 .app-shell.nav-collapsed .nav-pane,.app-shell.notes-collapsed .notes-pane,.app-shell.focus-mode .nav-pane,.app-shell.focus-mode .notes-pane { visibility:hidden; opacity:0; pointer-events:none; transform:translateX(-12px); }
 .nav-pane, .notes-pane, .work-pane { min-height: 0; }
@@ -471,7 +471,7 @@ body.theme-dark .primary-action { color: var(--accent-foreground); }
   .nav-item.selected::before { background: Highlight; }
 }
 @media (max-width: 1050px) {
-  .app-shell { grid-template-columns: 250px 274px minmax(0,1fr); }
+  .app-shell { --navigation-pane-width:250px;--notes-pane-width:274px; }
 }
 
 @container (max-width: 900px) {
@@ -500,8 +500,8 @@ html:lang(zh) .section-label,html:lang(ja) .section-label,html:lang(ko) .section
 html:lang(zh) .tool-button, html:lang(ja) .tool-button,
 html:lang(ko) .tool-button,html:lang(zh) .command-button,html:lang(ja) .command-button,html:lang(ko) .command-button { padding-inline:8px; }
 html:lang(zh) .settings-dialog label,html:lang(ja) .settings-dialog label,html:lang(ko) .settings-dialog label,html:lang(zh) .settings-dialog .setting-row,html:lang(ja) .settings-dialog .setting-row,html:lang(ko) .settings-dialog .setting-row { grid-template-columns:minmax(72px,92px) minmax(0,1fr); }
-html:lang(ja) .app-shell,html:lang(ko) .app-shell { grid-template-columns:clamp(272px,19vw,304px) clamp(294px,21vw,334px) minmax(0,1fr); }
-html:lang(de) .app-shell,html:lang(pt) .app-shell { grid-template-columns:clamp(280px,20vw,314px) clamp(300px,21vw,342px) minmax(0,1fr); }
+html:lang(ja) .app-shell,html:lang(ko) .app-shell { --navigation-pane-width:clamp(272px,19vw,304px);--notes-pane-width:clamp(294px,21vw,334px); }
+html:lang(de) .app-shell,html:lang(pt) .app-shell { --navigation-pane-width:clamp(280px,20vw,314px);--notes-pane-width:clamp(300px,21vw,342px); }
 html:lang(ja) .accent-button,html:lang(ja) .workspace-picker,html:lang(ja) .nav-item,html:lang(ko) .accent-button,html:lang(ko) .workspace-picker,html:lang(ko) .nav-item { min-height:37px;height:auto;padding-block:7px; }
 @media (max-width: 800px) {
   .app-shell { grid-template-columns: 280px minmax(0,1fr); }
