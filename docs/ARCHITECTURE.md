@@ -41,6 +41,8 @@ The infinite canvas uses one world transform for editors, mind maps, connections
 
 Pen input prefers raw and coalesced pointer events when available. Persistent ink is vector-based; raster canvases are render targets and must not become the source of truth.
 
+A pen stroke in progress is drawn on a viewport-sized wet layer and committed to the world ink canvas once when the pen lifts. Erasing, recoloring and moving ink repaint only the affected region. Ink stroke objects are immutable once stored: undo snapshots share them, so edits must replace a stroke (or copy it first) rather than change its points or color in place.
+
 ## Localization
 
 Application logic calls `t(key)` and must not contain locale-specific branches or translated literals. Add every new user-facing key to all supported locales in `i18n.js`. English text in static HTML is the no-script and first-parse fallback.
